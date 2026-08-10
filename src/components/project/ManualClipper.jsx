@@ -174,6 +174,7 @@ function VeoMarker({ externalId }) {
 export default function ManualClipper({ project, games, sources, reload, defaultCategory, trigger }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ video_source_id: "", category: defaultCategory || "buckets", start: 0, end: 8, description: "" });
+  const [savedClips, setSavedClips] = useState([]);
 
   const videoOptions = sources.filter((s) => s.status === "ready" || s.status === "error");
   const selected = sources.find((s) => s.id === form.video_source_id);
@@ -200,13 +201,18 @@ export default function ManualClipper({ project, games, sources, reload, default
       clip_url: src?.file_url || "",
       processing_status: "ready",
     });
-    setOpen(false);
-    setForm({ video_source_id: "", category: defaultCategory || "buckets", start: 0, end: 8, description: "" });
+    setSavedClips((prev) => [...prev, { category: form.category, start, end, description: form.description || "Manually clipped" }]);
+    setForm((f) => ({ ...f, start: 0, end: 8, description: "" }));
     reload();
   };
 
+  const done = () => {
+    setOpen(false);
+    setSavedClips([]);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setSavedClips([]); }}>
       <DialogTrigger asChild>
         {trigger || (
           <Button size="sm" className="bg-white/10 hover:bg-white/20">
@@ -277,10 +283,33 @@ export default function ManualClipper({ project, games, sources, reload, default
                 <Input className="mt-1 border-white/10 bg-white/5" value={form.description || ""}
                   onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
-              <Button onClick={save} disabled={!valid}
-                className="w-full bg-orange-500 font-semibold tracking-widest text-slate-950 hover:bg-orange-400 disabled:opacity-50">
-                SAVE CLIP
-              </Button>
+              {savedClips.length > 0 && (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <p className="mb-2 text-[11px] tracking-[0.18em] text-slate-400">
+                    {savedClips.length} CLIP{savedClips.length > 1 ? "S" : ""} ADDED FROM THIS VIDEO
+                  </p>
+                  <div className="space-y-1.5">
+                    {savedClips.map((c, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-slate-300">
+                        <span className="text-orange-400">{CATEGORIES.find((x) => x.key === c.category)?.emoji || "🎬"}</span>
+                        <span className="font-mono">{fmt(c.start)} → {fmt(c.end)}</span>
+                        <span className="truncate text-slate-500">{c.description}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button onClick={save} disabled={!valid}
+                  className="flex-1 bg-orange-500 font-semibold tracking-widest text-slate-950 hover:bg-orange-400 disabled:opacity-50">
+                  SAVE CLIP
+                </Button>
+                <Button onClick={done} variant="outline"
+                  className="border-white/15 bg-transparent px-6 hover:bg-white/10">
+                  DONE
+                </Button>
+              </div>
             </>
           )}
         </div>
