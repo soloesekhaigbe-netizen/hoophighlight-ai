@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ClipCard from "@/components/project/ClipCard";
-import AddClipDialog from "@/components/project/AddClipDialog";
+import ManualClipper from "@/components/project/ManualClipper";
 import { CATEGORIES } from "@/lib/categories";
 
 export default function ClipsTab({ project, games, sources, clips, reload, lockedCategory }) {
@@ -79,7 +79,7 @@ export default function ClipsTab({ project, games, sources, clips, reload, locke
         </Select>
         <div className="ml-auto flex gap-2">
           <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => bulk("accepted")}>Accept all shown</Button>
-          <AddClipDialog project={project} games={games} sources={sources} reload={reload} defaultCategory={lockedCategory} />
+          <ManualClipper project={project} games={games} sources={sources} reload={reload} defaultCategory={lockedCategory} />
         </div>
       </div>
 

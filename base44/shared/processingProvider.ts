@@ -360,7 +360,7 @@ export async function analyzeYouTubeFootage(base44, { videoId, reference_photos,
   // would only add latency. Cap refinement to keep the run time bounded.
   const refineLvl = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#'))) || lvl;
   if (step > 3) {
-    const toRefine = events.slice(0, 12);
+    const toRefine = events.slice(0, 30);
     for (let i = 0; i < toRefine.length; i += 4) {
       await Promise.all(toRefine.slice(i, i + 4).map(async (ev) => {
         const coarseT = Number(ev.event_seconds || ev.start_seconds || 0);
@@ -370,8 +370,8 @@ export async function analyzeYouTubeFootage(base44, { videoId, reference_photos,
           if (refined && Math.abs(refined.event - coarseT) <= 15) center = refined.event;
         } catch (_e) {}
         ev.event_seconds = center;
-        ev.start_seconds = Math.max(0, center - 10);
-        ev.end_seconds = center + 8;
+        ev.start_seconds = Math.max(0, center - 12);
+        ev.end_seconds = center + 10;
       }));
     }
   }
