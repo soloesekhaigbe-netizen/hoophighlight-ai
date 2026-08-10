@@ -157,6 +157,66 @@ function buildSheets(template, lvl, durationSec) {
   }));
 }
 
+// Refinement pass: the detection level uses the largest frames (best for identifying
+// the player) but they are spaced ~10s apart, so a clip's start can be off by ~10s.
+// YouTube also publishes denser storyboard levels (~2s apart). After a play is found
+// coarsely, we fetch the dense sheet covering that moment and ask the model to point
+// at the exact frame — tightening the clip to the real moment of the play.
+function pickFinestLevel(levels) {
+  let best = null;
+  levels.forEach((l, idx) => {
+    const ms = Number(l[5] || 0);
+    if (ms <= 0 || l[6] !== 'M$M') return;
+    if (!best || ms < best.ms) best = { level: idx, cols: Number(l[3]), rows: Number(l[4]), ms, sigh: l[7] };
+  });
+  return best;
+}
+
+function sheetForTime(template, lvl, t) {
+  const framesPerSheet = lvl.cols * lvl.rows;
+  const secPerSheet = (framesPerSheet * lvl.ms) / 1000;
+  const idx = Math.max(0, Math.floor(t / secPerSheet));
+  return {
+    index: idx, start: idx * secPerSheet, end: (idx + 1) * secPerSheet,
+    step: lvl.ms / 1000, cols: lvl.cols, rows: lvl.rows,
+    url: template.replace('$L', String(lvl.level)).replace('$N', 'M' + idx) + '&sigh=' + lvl.sigh
+  };
+}
+
+const REFINE_SCHEMA = {
+  type: 'object',
+  properties: {
+    frame_index: { type: 'number' },
+    exact_second: { type: 'number' },
+    confidence: { type: 'number' }
+  },
+  required: ['exact_second']
+};
+
+async function refineEvent(base44, template, finest, ev) {
+  const coarseT = Number(ev.event_seconds || ev.start_seconds || 0);
+  if (!Number.isFinite(coarseT)) return null;
+  const sheet = sheetForTime(template, finest, coarseT);
+  const prompt = [
+    'You are timing ONE basketball play precisely. The image is a single storyboard contact sheet from a basketball video.',
+    'It is a ' + sheet.cols + 'x' + sheet.rows + ' grid of frames, ' + sheet.step + 's apart in reading order (left to right, top to bottom), covering ' + Math.round(sheet.start) + 's to ' + Math.round(sheet.end) + 's of the video.',
+    'Locate this play: "' + (ev.description || ev.category) + '" (category: ' + ev.category + ').',
+    'Find the frame that best captures the MOMENT of the play — the ball entering the hoop, the dunk, the shot release, the block, or the rebound grab.',
+    'Return JSON: {frame_index (0-based position in reading order), exact_second (sheet start + frame_index x ' + sheet.step + '), confidence (0-1)}.',
+    'If this play is not visible in the sheet, return {frame_index: -1, exact_second: ' + coarseT + ', confidence: 0}.'
+  ].join('\n');
+  try {
+    const res = await base44.integrations.Core.InvokeLLM({
+      prompt, file_urls: [sheet.url], model: VISION_MODEL, response_json_schema: REFINE_SCHEMA
+    });
+    if (res && typeof res.exact_second === 'number' && Number(res.frame_index) >= 0) {
+      const exact = Math.max(0, Number(res.exact_second));
+      return { start: Math.max(0, exact - 3), end: exact + 3, event: exact };
+    }
+  } catch (_e) {}
+  return null;
+}
+
 export async function analyzeYouTubeFootage(base44, { videoId, reference_photos, player }) {
   const r = await fetch('https://www.youtube.com/watch?v=' + videoId, {
     headers: {
@@ -211,10 +271,29 @@ export async function analyzeYouTubeFootage(base44, { videoId, reference_photos,
     prompt, file_urls, model: VISION_MODEL, response_json_schema: SCHEMA
   });
   if (!result || typeof result !== 'object') return { player_identified: false, identity_confidence: 0, events: [] };
+
+  const events = Array.isArray(result.events) ? result.events : [];
+  // Refine each detected play's timestamp using the densest storyboard level
+  // (only if it is finer than the detection level).
+  // Refine each detected play's timestamp. A different storyboard level (denser
+  // frames per sheet, or a finer step) gives the model more frames around the play
+  // to pinpoint the exact moment — even when the step is the same, a 100-frame sheet
+  // is far more precise for locating one play than the 9-frame detection sheet.
+  const finest = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#')));
+  if (finest && finest.level !== lvl.level) {
+    for (const ev of events.slice(0, 10)) {
+      const refined = await refineEvent(base44, template, finest, ev);
+      if (refined) {
+        ev.start_seconds = refined.start;
+        ev.end_seconds = refined.end;
+        ev.event_seconds = refined.event;
+      }
+    }
+  }
   return {
     player_identified: Boolean(result.player_identified),
     identity_confidence: Number(result.identity_confidence || 0),
     identity_note: result.identity_note || '',
-    events: Array.isArray(result.events) ? result.events : []
+    events
   };
 }
