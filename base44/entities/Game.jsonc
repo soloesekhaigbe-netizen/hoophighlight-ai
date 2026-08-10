@@ -1,0 +1,37 @@
+{
+  "name": "Game",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "game_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "opponent": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "name"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

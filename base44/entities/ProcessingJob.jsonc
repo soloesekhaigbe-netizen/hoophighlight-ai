@@ -1,0 +1,63 @@
+{
+  "name": "ProcessingJob",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "video_source_id": {
+      "type": "string"
+    },
+    "tape_id": {
+      "type": "string"
+    },
+    "job_type": {
+      "type": "string",
+      "enum": [
+        "analysis",
+        "render"
+      ]
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_job_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "running",
+        "succeeded",
+        "failed"
+      ],
+      "default": "queued"
+    },
+    "message": {
+      "type": "string"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "project_id",
+    "job_type"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

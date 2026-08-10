@@ -1,0 +1,78 @@
+{
+  "name": "VideoSource",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "game_id": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "veo",
+        "youtube",
+        "unsupported"
+      ]
+    },
+    "external_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "queued",
+        "downloading",
+        "processing",
+        "analysing",
+        "detecting_plays",
+        "creating_clips",
+        "ready",
+        "error"
+      ],
+      "default": "queued"
+    },
+    "progress": {
+      "type": "number",
+      "default": 0
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "provider": {
+      "type": "string"
+    },
+    "provider_job_id": {
+      "type": "string"
+    },
+    "clips_detected": {
+      "type": "number",
+      "default": 0
+    }
+  },
+  "required": [
+    "project_id",
+    "url"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

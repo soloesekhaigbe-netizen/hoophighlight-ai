@@ -1,0 +1,79 @@
+{
+  "name": "Clip",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "game_id": {
+      "type": "string"
+    },
+    "video_source_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "buckets",
+        "rebounds",
+        "blocks",
+        "shooting"
+      ]
+    },
+    "play_type": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "event_seconds": {
+      "type": "number"
+    },
+    "start_seconds": {
+      "type": "number"
+    },
+    "end_seconds": {
+      "type": "number"
+    },
+    "confidence": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "accepted",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "order_index": {
+      "type": "number",
+      "default": 0
+    },
+    "notes": {
+      "type": "string"
+    },
+    "detection_source": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

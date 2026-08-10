@@ -1,0 +1,81 @@
+{
+  "name": "HighlightTape",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "buckets",
+        "rebounds",
+        "blocks",
+        "shooting"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "clip_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "clip_count": {
+      "type": "number",
+      "default": 0
+    },
+    "duration_seconds": {
+      "type": "number",
+      "default": 0
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "queued",
+        "rendering",
+        "ready",
+        "error"
+      ],
+      "default": "draft"
+    },
+    "export_mode": {
+      "type": "string",
+      "enum": [
+        "playlist",
+        "rendered"
+      ],
+      "default": "playlist"
+    },
+    "video_url": {
+      "type": "string"
+    },
+    "error_message": {
+      "type": "string"
+    },
+    "provider_job_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "category"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
