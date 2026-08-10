@@ -78,7 +78,7 @@ export default async function (req) {
     } catch (err) {
       await base44.entities.ProcessingJob.update(job.id, { status: 'failed', message: err.message });
       if (source.source_type !== 'file') {
-        await base44.entities.VideoSource.update(source.id, { status: 'ready', progress: 100, clips_detected: 0 });
+        await base44.entities.VideoSource.update(source.id, { status: 'ready', progress: 100, clips_detected: 0, error_message: 'Auto-analysis failed: ' + err.message });
         if (project?.email) {
           await notifyPlayer(base44, project.email, 'Link ready for manual clips',
             `Hi ${project.player_name},\n\nAutomatic analysis wasn't possible for "${source.title || source.url}" — the footage couldn't be scanned automatically. The source is ready: add clips manually by marking start/end timestamps from the Games tab.`);

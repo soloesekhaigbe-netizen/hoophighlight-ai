@@ -216,14 +216,43 @@ async function refineEvent(base44, template, finest, ev) {
   return null;
 }
 
+// YouTube rate-limits / bot-blocks datacenter IPs on the watch page (HTTP 429).
+// Send a realistic browser fingerprint + consent cookies and retry with backoff so
+// a soft rate limit can clear. This is the only endpoint that returns the storyboard
+// spec (the player API responds LOGIN_REQUIRED/UNPLAYABLE for server requests).
+async function fetchWatchPage(videoId) {
+  const url = 'https://www.youtube.com/watch?v=' + videoId + '&hl=en&gl=US&has_verified=1&bpctr=9999999999';
+  const headers = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.9',
+    'Sec-Ch-Ua': '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+    'Sec-Ch-Ua-Mobile': '?0',
+    'Sec-Ch-Ua-Platform': '"Windows"',
+    'Sec-Fetch-Dest': 'document',
+    'Sec-Fetch-Mode': 'navigate',
+    'Sec-Fetch-Site': 'none',
+    'Sec-Fetch-User': '?1',
+    'Upgrade-Insecure-Requests': '1',
+    'Cookie': 'CONSENT=PENDING+354; GPS=1; PREF=f4=4000000; VISITOR_INFO1_LIVE=a'
+  };
+  let last = null;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    if (attempt > 0) await new Promise((res) => setTimeout(res, 3000 * attempt));
+    try {
+      const r = await fetch(url, { headers });
+      if (r.ok) return r;
+      last = r.status;
+      if (r.status === 429 || r.status === 503) continue;
+      return r;
+    } catch (_e) {}
+  }
+  return { ok: false, status: last || 0, text: async () => '' };
+}
+
 export async function analyzeYouTubeFootage(base44, { videoId, reference_photos, player }) {
-  const r = await fetch('https://www.youtube.com/watch?v=' + videoId, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
-      'Accept-Language': 'en-US,en;q=0.9'
-    }
-  });
-  if (!r.ok) throw new Error('Could not fetch the YouTube page (HTTP ' + r.status + ').');
+  const r = await fetchWatchPage(videoId);
+  if (!r.ok) throw new Error('YouTube rate-limited the server (HTTP ' + r.status + '). Please retry in a minute, or upload the video file for direct analysis.');
   const html = await r.text();
   const pr = extractPlayerResponse(html);
   if (!pr) throw new Error('Could not read YouTube player data — the video may be private or restricted.');
@@ -260,8 +289,8 @@ export async function analyzeYouTubeFootage(base44, { videoId, reference_photos,
     '- shooting: ' + CATEGORY_GUIDE.shooting,
     '',
     'For each event, estimate start_seconds and end_seconds on the video timeline: take the sheet that contains the frame, add (frame position in reading order x ' + step + 's) to that sheet start. Give a one-line description and confidence 0-1.',
-    'Prioritise PRECISION — only report events you are confident involve the target player. It is better to miss a play than include the wrong player.',
-    'If you cannot identify the target player with confidence, set player_identified=false and return an empty events array.',
+    'Detect ALL notable basketball events you can see in these frames — made baskets, dunks, three-pointers, rebounds, and blocks — even if you cannot confirm the player is the target. The player will review and confirm each clip, so return every event you spot rather than none.',
+    'For each event, note in the description whether the player appears to match the target (jersey number / uniform colour). Set player_identified=true only if you are confident you can recognise the target player; otherwise set it false — but still return the events you detected.',
     'Return JSON matching the provided schema.'
   ].join('\n');
 
