@@ -1,0 +1,37 @@
+{
+  "name": "PortfolioEvent",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "portfolio_view",
+        "highlight_play",
+        "link_click",
+        "coach_contact"
+      ]
+    },
+    "category": {
+      "type": "string"
+    },
+    "visitor_hash": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "event_type"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {},
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

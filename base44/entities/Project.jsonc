@@ -2,6 +2,15 @@
   "name": "Project",
   "type": "object",
   "properties": {
+    "owner_user_id": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
     "player_name": {
       "type": "string"
     },
@@ -20,6 +29,37 @@
     "height": {
       "type": "string"
     },
+    "weight": {
+      "type": "string"
+    },
+    "country": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "school": {
+      "type": "string"
+    },
+    "graduation_year": {
+      "type": "string"
+    },
+    "date_of_birth": {
+      "type": "string",
+      "format": "date"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "bio": {
+      "type": "string"
+    },
+    "profile_photo": {
+      "type": "string"
+    },
     "photo_url": {
       "type": "string"
     },
@@ -31,6 +71,26 @@
     },
     "appearance_notes": {
       "type": "string"
+    },
+    "academic_gpa": {
+      "type": "string"
+    },
+    "academic_sat": {
+      "type": "string"
+    },
+    "academic_notes": {
+      "type": "string"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "is_public": {
+      "type": "boolean",
+      "default": true
+    },
+    "show_email": {
+      "type": "boolean",
+      "default": false
     },
     "identity_threshold": {
       "type": "number",

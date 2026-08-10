@@ -1,0 +1,52 @@
+{
+  "name": "CoachInquiry",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "player_id": {
+      "type": "string"
+    },
+    "coach_name": {
+      "type": "string"
+    },
+    "coach_email": {
+      "type": "string"
+    },
+    "school": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "read",
+        "replied",
+        "archived"
+      ],
+      "default": "new"
+    }
+  },
+  "required": [
+    "project_id",
+    "coach_name",
+    "coach_email",
+    "message"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {},
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}

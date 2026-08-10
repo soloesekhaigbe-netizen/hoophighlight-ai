@@ -2,6 +2,9 @@
   "name": "Clip",
   "type": "object",
   "properties": {
+    "player_id": {
+      "type": "string"
+    },
     "project_id": {
       "type": "string"
     },

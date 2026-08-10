@@ -1,0 +1,57 @@
+{
+  "name": "Coach",
+  "type": "object",
+  "properties": {
+    "project_id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "school": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_contacted",
+        "draft",
+        "sent",
+        "opened",
+        "replied",
+        "follow_up",
+        "interested",
+        "not_interested"
+      ],
+      "default": "not_contacted"
+    }
+  },
+  "required": [
+    "project_id",
+    "name",
+    "email"
+  ],
+  "rls": {
+    "read": {
+      "created_by_id": "{{user.id}}"
+    },
+    "create": {
+      "created_by_id": "{{user.id }}"
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "created_by_id": "{{user.id}}"
+    }
+  }
+}
