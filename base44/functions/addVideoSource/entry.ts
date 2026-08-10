@@ -39,14 +39,16 @@ export default async function (req) {
         rejected.push({ url: raw, error: parsed.error });
         continue;
       }
+      const isLink = parsed.source_type === 'youtube' || parsed.source_type === 'veo';
       const source = await base44.entities.VideoSource.create({
         project_id,
         game_id: game_id || '',
         url: (raw || '').trim(),
         source_type: parsed.source_type,
         external_id: parsed.external_id,
-        status: 'queued',
-        progress: 0
+        title: title || (isLink ? 'Link source (manual mode)' : 'Video source'),
+        status: isLink ? 'ready' : 'queued',
+        progress: isLink ? 100 : 0
       });
       created.push(source);
     }

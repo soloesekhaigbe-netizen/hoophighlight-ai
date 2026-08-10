@@ -1,13 +1,18 @@
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { RotateCw, Trash2, AlertTriangle } from "lucide-react";
+import { RotateCw, Trash2, AlertTriangle, Info } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
 import AddGameDialog from "@/components/project/AddGameDialog";
 import { Plus } from "lucide-react";
 
 export default function GamesTab({ project, games, sources, clips, reload }) {
   const retry = async (source) => {
+    if (source.source_type !== "file") {
+      await base44.entities.VideoSource.update(source.id, { status: "ready", progress: 100, error_message: "" });
+      reload();
+      return;
+    }
     await base44.entities.VideoSource.update(source.id, { status: "queued", progress: 0, error_message: "" });
     reload();
     await base44.functions.invoke("analyzeVideoSource", { video_source_id: source.id });
@@ -34,7 +39,7 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
 
       {games.length === 0 && (
         <div className="rounded-3xl border border-dashed border-white/10 p-14 text-center text-sm text-slate-400">
-          No games yet. Add a Veo or YouTube link to start processing.
+          No games yet. Upload footage for automatic AI analysis, or add a Veo/YouTube link for manual clip marking.
         </div>
       )}
 
@@ -79,6 +84,11 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
                   {s.error_message && (
                     <p className="mt-3 flex gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-xs text-rose-200">
                       <AlertTriangle className="h-4 w-4 shrink-0" />{s.error_message}
+                    </p>
+                  )}
+                  {s.source_type !== "file" && s.status === "ready" && (
+                    <p className="mt-3 flex gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3 text-xs text-sky-200">
+                      <Info className="h-4 w-4 shrink-0" />Link mode — auto-analysis isn't available. Add clips manually by marking start/end timestamps.
                     </p>
                   )}
                 </div>

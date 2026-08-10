@@ -14,7 +14,11 @@ function HighlightClip({ clip }) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div onClick={onPlay}>
-        <ClipPlayer clip={clip} source={{ source_type: "file", file_url: clip.clip_url }} />
+        <ClipPlayer clip={clip} source={
+          clip.source_type === "youtube" || clip.source_type === "veo"
+            ? { source_type: clip.source_type, external_id: clip.external_id }
+            : { source_type: "file", file_url: clip.clip_url }
+        } />
       </div>
       <div className="p-3">
         <p className="text-sm font-medium text-slate-800">{clip.description || clip.play_type || catMeta(clip.category).label}</p>

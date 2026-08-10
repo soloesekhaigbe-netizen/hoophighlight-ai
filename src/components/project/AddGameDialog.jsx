@@ -32,7 +32,9 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
     setErrors(rejected);
     onDone?.();
     for (const s of created) {
-      base44.functions.invoke("analyzeVideoSource", { video_source_id: s.id }).then(() => onDone?.());
+      if (s.source_type === "file") {
+        base44.functions.invoke("analyzeVideoSource", { video_source_id: s.id }).then(() => onDone?.());
+      }
     }
     setBusy(false);
     if (!rejected.length) { setOpen(false); setUrls(""); setForm({}); setUploadFile(null); }
@@ -115,7 +117,7 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
               placeholder={type === "veo" ? "https://app.veo.co/matches/..." : "https://www.youtube.com/watch?v=..."}
               className="mt-1 border-white/10 bg-white/5 font-mono text-xs" />
             <p className="mt-2 text-[11px] text-slate-500">
-              YouTube/Veo links the Base44 environment cannot fetch directly won't produce stored clips. Upload the file for the full AI pipeline.
+              Links run in manual mode — add clips by marking start/end timestamps. Upload a file for automatic AI analysis.
             </p>
           </div>
         )}

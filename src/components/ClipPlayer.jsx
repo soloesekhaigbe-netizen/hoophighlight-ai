@@ -136,6 +136,30 @@ function FailedState({ onRetry, retrying }) {
   );
 }
 
+function EmbedPlayer({ source, clip, autoplay }) {
+  const start = Math.max(0, Math.floor(clip?.start_seconds || 0));
+  const end = Math.ceil(clip?.end_seconds || 0);
+  let src = "";
+  if (source.source_type === "youtube") {
+    const params = new URLSearchParams({ rel: "0", modestbranding: "1", playsinline: "1", start: String(start) });
+    if (end > start) params.set("end", String(end));
+    if (autoplay) params.set("autoplay", "1");
+    src = `https://www.youtube.com/embed/${source.external_id}?${params.toString()}`;
+  } else {
+    src = `https://app.veo.co/matches/${source.external_id}/embed`;
+  }
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+      <iframe src={src} className="h-full w-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen title="clip" />
+      {source.source_type === "veo" && (
+        <div className="pointer-events-none absolute left-2 top-2 rounded bg-black/70 px-2 py-1 text-[10px] text-white/90">
+          Segment at {fmtClock(start)} — scrub to view
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ClipPlayer({ clip, source, autoplay, onEnded }) {
   const [retrying, setRetrying] = useState(false);
   const clipUrl = clip?.clip_url || (source?.source_type === "file" ? source?.file_url : "") || "";
@@ -152,6 +176,9 @@ export default function ClipPlayer({ clip, source, autoplay, onEnded }) {
     setRetrying(false);
   };
 
+  if (source?.source_type === "youtube" || source?.source_type === "veo") {
+    return <EmbedPlayer source={source} clip={clip} autoplay={autoplay} />;
+  }
   if (status === "failed" && !clipUrl) return <FailedState onRetry={retry} retrying={retrying} />;
   if (!clipUrl) return <MissingSource />;
   return (

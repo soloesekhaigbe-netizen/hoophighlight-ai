@@ -16,19 +16,28 @@ export default async function (req) {
     if (!project) return Response.json({ error: 'Portfolio not found' }, { status: 404 });
     if (project.is_public === false) return Response.json({ error: 'This portfolio is private' }, { status: 403 });
 
-    const [games, clips, tapes] = await Promise.all([
+    const [games, clips, tapes, sources] = await Promise.all([
       base44.asServiceRole.entities.Game.filter({ project_id }),
       base44.asServiceRole.entities.Clip.filter({ project_id }),
-      base44.asServiceRole.entities.HighlightTape.filter({ project_id })
+      base44.asServiceRole.entities.HighlightTape.filter({ project_id }),
+      base44.asServiceRole.entities.VideoSource.filter({ project_id })
     ]);
+    const sourceById = Object.fromEntries(sources.map((s) => [s.id, s]));
 
     const accepted = clips
-      .filter((c) => c.status === 'accepted' && c.processing_status === 'ready' && c.clip_url)
-      .map((c) => ({
-        id: c.id, category: c.category, play_type: c.play_type, description: c.description,
-        start_seconds: c.start_seconds, end_seconds: c.end_seconds, game_id: c.game_id,
-        clip_url: c.clip_url, identity_confidence: c.identity_confidence, play_confidence: c.play_confidence
-      }));
+      .filter((c) => c.status === 'accepted' && c.processing_status === 'ready')
+      .map((c) => {
+        const src = c.video_source_id ? sourceById[c.video_source_id] : null;
+        return {
+          id: c.id, category: c.category, play_type: c.play_type, description: c.description,
+          start_seconds: c.start_seconds, end_seconds: c.end_seconds, game_id: c.game_id,
+          clip_url: c.clip_url || '',
+          source_type: src?.source_type || (c.clip_url ? 'file' : ''),
+          external_id: src?.external_id || '',
+          identity_confidence: c.identity_confidence, play_confidence: c.play_confidence
+        };
+      })
+      .filter((c) => c.clip_url || c.source_type === 'youtube' || c.source_type === 'veo');
 
     const publicTapes = tapes.filter((t) => t.status === 'ready').map((t) => ({
       id: t.id, category: t.category, title: t.title, clip_count: t.clip_count, duration_seconds: t.duration_seconds, clip_ids: t.clip_ids

@@ -30,6 +30,8 @@ export default function AddClipDialog({ project, games, sources, reload, default
       status: "accepted",
       order_index: 999,
       detection_source: "manual",
+      clip_url: src?.file_url || "",
+      processing_status: "ready",
     });
     setOpen(false);
     reload();
