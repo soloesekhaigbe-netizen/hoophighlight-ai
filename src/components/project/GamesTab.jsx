@@ -8,11 +8,6 @@ import { Plus } from "lucide-react";
 
 export default function GamesTab({ project, games, sources, clips, reload }) {
   const retry = async (source) => {
-    if (source.source_type !== "file") {
-      await base44.entities.VideoSource.update(source.id, { status: "ready", progress: 100, error_message: "" });
-      reload();
-      return;
-    }
     await base44.entities.VideoSource.update(source.id, { status: "queued", progress: 0, error_message: "" });
     reload();
     await base44.functions.invoke("analyzeVideoSource", { video_source_id: source.id });
@@ -71,7 +66,7 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
                     </div>
                     <div className="flex items-center gap-3">
                       <StatusBadge status={s.status} />
-                      {s.status === "error" && (
+                      {(s.status === "error" || (s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0)) && (
                         <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => retry(s)}>
                           <RotateCw className="mr-2 h-3.5 w-3.5" /> Retry
                         </Button>
@@ -86,9 +81,9 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
                       <AlertTriangle className="h-4 w-4 shrink-0" />{s.error_message}
                     </p>
                   )}
-                  {s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0 && (
+                  {s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0 && !s.error_message && (
                     <p className="mt-3 flex gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3 text-xs text-sky-200">
-                      <Info className="h-4 w-4 shrink-0" />Auto-analysis couldn't read this link — add clips manually by marking start/end timestamps.
+                      <Info className="h-4 w-4 shrink-0" />No plays were detected automatically — add clips manually by marking start/end timestamps.
                     </p>
                   )}
                 </div>

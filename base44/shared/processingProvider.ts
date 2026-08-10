@@ -98,7 +98,11 @@ export async function analyzeFootage(base44, { video_url, reference_photos, play
 // No video download, no external service — only an HTTP fetch + InvokeLLM.
 // ---------------------------------------------------------------------------
 
-const MAX_SHEETS = 16;
+// Process up to 40 sheets so a long game is sampled with much smaller gaps. Sheets
+// are sent to the model in batches of BATCH_SIZE so a single InvokeLLM call never
+// receives too many images at once.
+const MAX_SHEETS = 30;
+const BATCH_SIZE = 10;
 
 function extractPlayerResponse(html) {
   const i = html.indexOf('ytInitialPlayerResponse');
@@ -123,19 +127,22 @@ function extractPlayerResponse(html) {
   return null;
 }
 
-// Pick the storyboard level with the largest frame size (best for recognising
-// jersey numbers / faces). Each level: [frameW, frameH, ?, cols, rows, ms, name, sigh].
+// Prefer a DENSE level (frames <= 5s apart) so a play is less likely to fall between
+// samples; among dense levels pick the largest frame size for easier player ID.
+// Fall back to the largest-frame level if no dense level exists. Each level:
+// [frameW, frameH, ?, cols, rows, ms, name, sigh].
 function pickLevel(levels) {
-  let best = null;
+  let dense = null;
+  let any = null;
   levels.forEach((l, idx) => {
     const ms = Number(l[5] || 0);
     if (ms <= 0 || l[6] !== 'M$M') return;
     const fw = Number(l[0] || 0);
-    if (!best || fw > best.fw) {
-      best = { level: idx, cols: Number(l[3]), rows: Number(l[4]), ms, sigh: l[7], fw };
-    }
+    const entry = { level: idx, cols: Number(l[3]), rows: Number(l[4]), ms, sigh: l[7], fw };
+    if (!any || fw > any.fw) any = entry;
+    if (ms <= 5000 && (!dense || fw > dense.fw)) dense = entry;
   });
-  return best;
+  return dense || any;
 }
 
 function buildSheets(template, lvl, durationSec) {
@@ -157,11 +164,10 @@ function buildSheets(template, lvl, durationSec) {
   }));
 }
 
-// Refinement pass: the detection level uses the largest frames (best for identifying
-// the player) but they are spaced ~10s apart, so a clip's start can be off by ~10s.
-// YouTube also publishes denser storyboard levels (~2s apart). After a play is found
-// coarsely, we fetch the dense sheet covering that moment and ask the model to point
-// at the exact frame — tightening the clip to the real moment of the play.
+// Refinement pass: if the detection level's frames are spaced far apart, the clip's
+// start can be off by that spacing. YouTube also publishes denser storyboard levels.
+// After a play is found coarsely, we fetch the dense sheet covering that moment and
+// ask the model to point at the exact frame — tightening the clip to the real play.
 function pickFinestLevel(levels) {
   let best = null;
   levels.forEach((l, idx) => {
@@ -251,79 +257,128 @@ async function fetchWatchPage(videoId) {
 }
 
 export async function analyzeYouTubeFootage(base44, { videoId, reference_photos, player }) {
-  const r = await fetchWatchPage(videoId);
-  if (!r.ok) throw new Error('YouTube rate-limited the server (HTTP ' + r.status + '). Please retry in a minute, or upload the video file for direct analysis.');
-  const html = await r.text();
-  const pr = extractPlayerResponse(html);
-  if (!pr) throw new Error('Could not read YouTube player data — the video may be private or restricted.');
+  // YouTube sometimes answers datacenter IPs with HTTP 200 but a degraded page that
+  // omits the storyboard spec. Treat that as a soft, retryable failure — a later
+  // attempt often gets the full page. Retry a few times with backoff before giving up.
+  let html = '';
+  let pr = null;
+  let spec = null;
+  let lastErr = '';
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise((res) => setTimeout(res, 8000 * attempt));
+    const r = await fetchWatchPage(videoId);
+    if (!r.ok) { lastErr = 'YouTube rate-limited the server (HTTP ' + r.status + ').'; continue; }
+    html = await r.text();
+    pr = extractPlayerResponse(html);
+    if (!pr) { lastErr = 'Could not read YouTube player data — the video may be private or restricted.'; continue; }
+    spec = pr.storyboards?.playerStoryboardSpecRenderer?.spec;
+    if (spec) break;
+    lastErr = 'YouTube served a degraded response with no video frames.';
+  }
+  if (!spec) {
+    throw new Error(lastErr + ' Please retry in a few minutes, or upload the video file for reliable automatic analysis.');
+  }
   const durationSec = Number(pr.videoDetails?.lengthSeconds || 0);
-  const spec = pr.storyboards?.playerStoryboardSpecRenderer?.spec;
-  if (!spec) throw new Error('No storyboard frames are available for this video.');
   const parts = spec.split('|');
   const template = parts[0];
   const lvl = pickLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#')));
   if (!lvl) throw new Error('No timed storyboard frames are available for this video.');
   const sheets = buildSheets(template, lvl, durationSec);
   const step = lvl.ms / 1000;
+  const refPhotos = Array.isArray(reference_photos) ? reference_photos : [];
 
-  const frameDesc = 'Each image below is a contact sheet: a ' + lvl.cols + 'x' + lvl.rows +
+  const frameDesc = 'Each image is a contact sheet: a ' + lvl.cols + 'x' + lvl.rows +
     ' grid of small video frames, ' + step + 's apart in reading order (left to right, top to bottom).';
-  const sheetDesc = sheets.map((s, i) =>
-    'Image ' + (i + 1) + ': sheet #' + s.index + ', covers ' + Math.round(s.start) + 's to ' + Math.round(s.end) + 's.'
-  ).join('\n');
 
-  const prompt = [
-    'You are an expert basketball video analyst. The images provided are STORYBOARD CONTACT SHEETS sampled from ONE YouTube basketball video. They are not one photo — each image is a grid of sequential frames from the game.',
-    frameDesc,
-    sheetDesc,
-    '',
-    'Target player: name="' + (player?.name || 'unknown') + '", jersey #' + (player?.jersey_number || '?') + ', team="' + (player?.team || '') + '", position="' + (player?.position || '') + '".',
-    'Appearance notes: ' + (player?.appearance || 'none') + '.',
-    (player?.reference_photos?.length ? 'Reference photos of the target player are attached AFTER the contact sheets.' : 'No reference photos were provided.'),
-    '',
-    'Identify ONLY the target player using jersey number, uniform colour, body type, and court position. Do not rely on jersey number alone.',
-    'Detect these event categories for the target player only:',
-    '- buckets: ' + CATEGORY_GUIDE.buckets,
-    '- rebounds: ' + CATEGORY_GUIDE.rebounds,
-    '- blocks: ' + CATEGORY_GUIDE.blocks,
-    '- shooting: ' + CATEGORY_GUIDE.shooting,
-    '',
-    'For each event, estimate start_seconds and end_seconds on the video timeline: take the sheet that contains the frame, add (frame position in reading order x ' + step + 's) to that sheet start. Give a one-line description and confidence 0-1.',
-    'Detect ALL notable basketball events you can see in these frames — made baskets, dunks, three-pointers, rebounds, and blocks — even if you cannot confirm the player is the target. The player will review and confirm each clip, so return every event you spot rather than none.',
-    'For each event, note in the description whether the player appears to match the target (jersey number / uniform colour). Set player_identified=true only if you are confident you can recognise the target player; otherwise set it false — but still return the events you detected.',
-    'Return JSON matching the provided schema.'
-  ].join('\n');
-
-  const file_urls = [...sheets.map((s) => s.url), ...(Array.isArray(reference_photos) ? reference_photos : [])].filter(Boolean);
-  const result = await base44.integrations.Core.InvokeLLM({
-    prompt, file_urls, model: VISION_MODEL, response_json_schema: SCHEMA
-  });
-  if (!result || typeof result !== 'object') return { player_identified: false, identity_confidence: 0, events: [] };
-
-  const events = Array.isArray(result.events) ? result.events : [];
-  // Refine each detected play's timestamp using the densest storyboard level
-  // (only if it is finer than the detection level).
-  // Refine each play's timestamp, then set a generous window around it. Storyboard
-  // frames are ~10s apart, so a tight clip can miss the moment entirely — an 18s
-  // window centered on the estimate reliably contains the play with a little lead-in.
-  // Only trust a refinement that stays near the coarse estimate; a big jump means the
-  // model found a different, similar play, so we keep the original detection.
-  const refineLvl = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#'))) || lvl;
-  for (const ev of events.slice(0, 10)) {
-    const coarseT = Number(ev.event_seconds || ev.start_seconds || 0);
-    let center = coarseT;
+  // Run detection in batches so each InvokeLLM call receives a manageable number of
+  // images, while together the batches cover far more of the game than a single call.
+  // Batches run in parallel so total detection time ≈ one call, not N calls.
+  const allEvents = [];
+  let playerIdentified = false;
+  let identityConfidence = 0;
+  let identityNote = '';
+  const batches = [];
+  for (let b = 0; b < sheets.length; b += BATCH_SIZE) batches.push(sheets.slice(b, b + BATCH_SIZE));
+  const results = await Promise.all(batches.map(async (batch, bi) => {
+    const sheetDesc = batch.map((s, i) =>
+      'Image ' + (i + 1) + ': sheet #' + s.index + ', covers ' + Math.round(s.start) + 's to ' + Math.round(s.end) + 's.'
+    ).join('\n');
+    const prompt = [
+      'You are an expert basketball video analyst. The images provided are STORYBOARD CONTACT SHEETS sampled from ONE YouTube basketball video. They are not one photo — each image is a grid of sequential frames from the game.',
+      frameDesc,
+      sheetDesc,
+      '',
+      'Target player: name="' + (player?.name || 'unknown') + '", jersey #' + (player?.jersey_number || '?') + ', team="' + (player?.team || '') + '", position="' + (player?.position || '') + '".',
+      'Appearance notes: ' + (player?.appearance || 'none') + '.',
+      (refPhotos.length ? 'Reference photos of the target player are attached AFTER the contact sheets.' : 'No reference photos were provided.'),
+      '',
+      'Identify ONLY the target player using jersey number, uniform colour, body type, and court position. Do not rely on jersey number alone.',
+      'Detect these event categories for the target player only:',
+      '- buckets: ' + CATEGORY_GUIDE.buckets,
+      '- rebounds: ' + CATEGORY_GUIDE.rebounds,
+      '- blocks: ' + CATEGORY_GUIDE.blocks,
+      '- shooting: ' + CATEGORY_GUIDE.shooting,
+      '',
+      'For each event, estimate start_seconds and end_seconds on the video timeline: take the sheet that contains the frame, add (frame position in reading order x ' + step + 's) to that sheet start. Give a one-line description and confidence 0-1.',
+      'Detect ALL notable basketball events you can see in these frames — made baskets, dunks, three-pointers, rebounds, and blocks — even if you cannot confirm the player is the target. The player will review and confirm each clip, so return every event you spot. An empty events array is only acceptable when these frames show no basketball action at all.',
+      'For each event, note in the description whether the player appears to match the target (jersey number / uniform colour). Set player_identified=true only if you are confident you can recognise the target player; otherwise set it false — but still return the events you detected.',
+      'Return JSON matching the provided schema.'
+    ].join('\n');
+    // Attach reference photos only to the first batch (they describe the target once).
+    const file_urls = [...batch.map((s) => s.url), ...(bi === 0 ? refPhotos : [])].filter(Boolean);
     try {
-      const refined = await refineEvent(base44, template, refineLvl, ev);
-      if (refined && Math.abs(refined.event - coarseT) <= 15) center = refined.event;
-    } catch (_e) {}
-    ev.event_seconds = center;
-    ev.start_seconds = Math.max(0, center - 10);
-    ev.end_seconds = center + 8;
+      return await base44.integrations.Core.InvokeLLM({
+        prompt, file_urls, model: VISION_MODEL, response_json_schema: SCHEMA
+      });
+    } catch (_e) { return null; }
+  }));
+  for (const result of results) {
+    if (result && typeof result === 'object') {
+      if (result.player_identified) playerIdentified = true;
+      if (Number(result.identity_confidence) > identityConfidence) identityConfidence = Number(result.identity_confidence);
+      if (result.identity_note) identityNote = result.identity_note;
+      if (Array.isArray(result.events)) allEvents.push(...result.events);
+    }
+  }
+
+  // Deduplicate events from overlapping batches that fall within 4s of each other
+  // (same category), keeping the higher-confidence detection.
+  allEvents.sort((a, b) => (Number(a.event_seconds || a.start_seconds || 0)) - (Number(b.event_seconds || b.start_seconds || 0)));
+  const events = [];
+  for (const ev of allEvents) {
+    const t = Number(ev.event_seconds || ev.start_seconds || 0);
+    const near = events.find((e) => e.category === ev.category && Math.abs(Number(e.event_seconds || e.start_seconds || 0) - t) < 4);
+    if (near) {
+      if (Number(ev.confidence || 0) > Number(near.confidence || 0)) Object.assign(near, ev);
+    } else {
+      events.push(ev);
+    }
+  }
+
+  // Only refine when the detection level is coarse (frames > 3s apart). When the
+  // level is already dense, the coarse timestamp is precise enough and refinement
+  // would only add latency. Cap refinement to keep the run time bounded.
+  const refineLvl = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#'))) || lvl;
+  if (step > 3) {
+    const toRefine = events.slice(0, 12);
+    for (let i = 0; i < toRefine.length; i += 4) {
+      await Promise.all(toRefine.slice(i, i + 4).map(async (ev) => {
+        const coarseT = Number(ev.event_seconds || ev.start_seconds || 0);
+        let center = coarseT;
+        try {
+          const refined = await refineEvent(base44, template, refineLvl, ev);
+          if (refined && Math.abs(refined.event - coarseT) <= 15) center = refined.event;
+        } catch (_e) {}
+        ev.event_seconds = center;
+        ev.start_seconds = Math.max(0, center - 10);
+        ev.end_seconds = center + 8;
+      }));
+    }
   }
   return {
-    player_identified: Boolean(result.player_identified),
-    identity_confidence: Number(result.identity_confidence || 0),
-    identity_note: result.identity_note || '',
+    player_identified: playerIdentified,
+    identity_confidence: identityConfidence,
+    identity_note: identityNote,
     events
   };
 }
