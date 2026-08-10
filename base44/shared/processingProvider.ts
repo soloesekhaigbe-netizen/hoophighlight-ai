@@ -85,3 +85,136 @@ export async function analyzeFootage(base44, { video_url, reference_photos, play
     events: Array.isArray(result.events) ? result.events : []
   };
 }
+
+// ---------------------------------------------------------------------------
+// YouTube analysis via public storyboard contact sheets.
+//
+// The vision model cannot read a YouTube URL directly (it only "recognises" the
+// link from training, not the actual frames). YouTube, however, exposes public
+// "storyboard" contact sheets: grid images of small frames taken ~2s apart that
+// scrub the whole video. We extract those sheet URLs from the watch page, feed
+// them (plus the player reference photos) to the vision model, and tell it the
+// time range each sheet covers so it can locate events on the video timeline.
+// No video download, no external service — only an HTTP fetch + InvokeLLM.
+// ---------------------------------------------------------------------------
+
+const MAX_SHEETS = 16;
+
+function extractPlayerResponse(html) {
+  const i = html.indexOf('ytInitialPlayerResponse');
+  if (i < 0) return null;
+  const eq = html.indexOf('=', i);
+  let s = eq + 1;
+  while (s < html.length && /\s/.test(html[s])) s++;
+  if (html[s] !== '{') return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let j = s; j < html.length; j++) {
+    const c = html[j];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else {
+      if (c === '"') inStr = true;
+      else if (c === '{') depth++;
+      else if (c === '}') { depth--; if (depth === 0) { try { return JSON.parse(html.slice(s, j + 1)); } catch (_e) { return null; } } }
+    }
+  }
+  return null;
+}
+
+// Pick the storyboard level with the largest frame size (best for recognising
+// jersey numbers / faces). Each level: [frameW, frameH, ?, cols, rows, ms, name, sigh].
+function pickLevel(levels) {
+  let best = null;
+  levels.forEach((l, idx) => {
+    const ms = Number(l[5] || 0);
+    if (ms <= 0 || l[6] !== 'M$M') return;
+    const fw = Number(l[0] || 0);
+    if (!best || fw > best.fw) {
+      best = { level: idx, cols: Number(l[3]), rows: Number(l[4]), ms, sigh: l[7], fw };
+    }
+  });
+  return best;
+}
+
+function buildSheets(template, lvl, durationSec) {
+  const framesPerSheet = lvl.cols * lvl.rows;
+  const secPerSheet = (framesPerSheet * lvl.ms) / 1000;
+  const total = Math.max(1, Math.ceil(durationSec / secPerSheet));
+  const picks = [];
+  if (total <= MAX_SHEETS) {
+    for (let i = 0; i < total; i++) picks.push(i);
+  } else {
+    const stride = total / MAX_SHEETS;
+    for (let k = 0; k < MAX_SHEETS; k++) picks.push(Math.floor(k * stride));
+  }
+  return picks.map((i) => ({
+    index: i,
+    start: i * secPerSheet,
+    end: (i + 1) * secPerSheet,
+    url: template.replace('$L', String(lvl.level)).replace('$N', 'M' + i) + '&sigh=' + lvl.sigh
+  }));
+}
+
+export async function analyzeYouTubeFootage(base44, { videoId, reference_photos, player }) {
+  const r = await fetch('https://www.youtube.com/watch?v=' + videoId, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36',
+      'Accept-Language': 'en-US,en;q=0.9'
+    }
+  });
+  if (!r.ok) throw new Error('Could not fetch the YouTube page (HTTP ' + r.status + ').');
+  const html = await r.text();
+  const pr = extractPlayerResponse(html);
+  if (!pr) throw new Error('Could not read YouTube player data — the video may be private or restricted.');
+  const durationSec = Number(pr.videoDetails?.lengthSeconds || 0);
+  const spec = pr.storyboards?.playerStoryboardSpecRenderer?.spec;
+  if (!spec) throw new Error('No storyboard frames are available for this video.');
+  const parts = spec.split('|');
+  const template = parts[0];
+  const lvl = pickLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#')));
+  if (!lvl) throw new Error('No timed storyboard frames are available for this video.');
+  const sheets = buildSheets(template, lvl, durationSec);
+  const step = lvl.ms / 1000;
+
+  const frameDesc = 'Each image below is a contact sheet: a ' + lvl.cols + 'x' + lvl.rows +
+    ' grid of small video frames, ' + step + 's apart in reading order (left to right, top to bottom).';
+  const sheetDesc = sheets.map((s, i) =>
+    'Image ' + (i + 1) + ': sheet #' + s.index + ', covers ' + Math.round(s.start) + 's to ' + Math.round(s.end) + 's.'
+  ).join('\n');
+
+  const prompt = [
+    'You are an expert basketball video analyst. The images provided are STORYBOARD CONTACT SHEETS sampled from ONE YouTube basketball video. They are not one photo — each image is a grid of sequential frames from the game.',
+    frameDesc,
+    sheetDesc,
+    '',
+    'Target player: name="' + (player?.name || 'unknown') + '", jersey #' + (player?.jersey_number || '?') + ', team="' + (player?.team || '') + '", position="' + (player?.position || '') + '".',
+    'Appearance notes: ' + (player?.appearance || 'none') + '.',
+    (player?.reference_photos?.length ? 'Reference photos of the target player are attached AFTER the contact sheets.' : 'No reference photos were provided.'),
+    '',
+    'Identify ONLY the target player using jersey number, uniform colour, body type, and court position. Do not rely on jersey number alone.',
+    'Detect these event categories for the target player only:',
+    '- buckets: ' + CATEGORY_GUIDE.buckets,
+    '- rebounds: ' + CATEGORY_GUIDE.rebounds,
+    '- blocks: ' + CATEGORY_GUIDE.blocks,
+    '- shooting: ' + CATEGORY_GUIDE.shooting,
+    '',
+    'For each event, estimate start_seconds and end_seconds on the video timeline: take the sheet that contains the frame, add (frame position in reading order x ' + step + 's) to that sheet start. Give a one-line description and confidence 0-1.',
+    'Prioritise PRECISION — only report events you are confident involve the target player. It is better to miss a play than include the wrong player.',
+    'If you cannot identify the target player with confidence, set player_identified=false and return an empty events array.',
+    'Return JSON matching the provided schema.'
+  ].join('\n');
+
+  const file_urls = [...sheets.map((s) => s.url), ...(Array.isArray(reference_photos) ? reference_photos : [])].filter(Boolean);
+  const result = await base44.integrations.Core.InvokeLLM({
+    prompt, file_urls, model: VISION_MODEL, response_json_schema: SCHEMA
+  });
+  if (!result || typeof result !== 'object') return { player_identified: false, identity_confidence: 0, events: [] };
+  return {
+    player_identified: Boolean(result.player_identified),
+    identity_confidence: Number(result.identity_confidence || 0),
+    identity_note: result.identity_note || '',
+    events: Array.isArray(result.events) ? result.events : []
+  };
+}

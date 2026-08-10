@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { analyzeFootage } from '../../shared/processingProvider.ts';
+import { analyzeFootage, analyzeYouTubeFootage } from '../../shared/processingProvider.ts';
 import { notifyPlayer } from '../../shared/emailProvider.ts';
 
 const CONTEXT = { buckets: { pre: 6, post: 4 }, rebounds: { pre: 5, post: 3 }, blocks: { pre: 5, post: 4 }, shooting: { pre: 5, post: 4 } };
@@ -38,38 +38,50 @@ export default async function (req) {
       return Response.json({ ok: false, error: message }, { status: 200 });
     };
 
-    // Uploaded files are analysed directly. Link sources (YouTube/Veo) also attempt
-    // automatic vision analysis on the URL; if the model can't read the link we fall
-    // back to manual mode (source ready, clips added by marking timestamps).
-    const videoUrl = source.source_type === 'file' ? source.file_url : source.url;
-    if (!videoUrl) return await fail('No playable source found for this video.');
+    // File uploads are analysed directly. YouTube links are scanned by extracting the
+    // video's public storyboard contact-sheets and feeding those frames to the vision
+    // model. Veo links can't be read server-side, so they fall back to manual mode.
+    const playerObj = project ? {
+      name: project.player_name, jersey_number: project.jersey_number,
+      team: project.team_name, position: project.position,
+      appearance: project.appearance_notes,
+      reference_photos: project.reference_photos
+    } : null;
+    const refPhotos = project?.reference_photos || [];
+
+    if (source.source_type !== 'file' && source.source_type !== 'youtube') {
+      await base44.entities.VideoSource.update(source.id, { status: 'ready', progress: 100, clips_detected: 0 });
+      if (project?.email) {
+        await notifyPlayer(base44, project.email, 'Link ready for manual clips',
+          `Hi ${project.player_name},\n\nAutomatic analysis isn't available for "${source.title || source.url}". The source is ready: add clips manually by marking start/end timestamps from the Games tab.`);
+      }
+      return Response.json({ ok: true, clips: 0, manual: true });
+    }
+    if (source.source_type === 'file' && !source.file_url) {
+      return await fail('No playable source file found for this video.');
+    }
 
     await base44.entities.VideoSource.update(source.id, { status: 'analysing', progress: 20, error_message: '' });
 
     const job = await base44.entities.ProcessingJob.create({
       project_id: source.project_id, video_source_id: source.id, job_type: 'analysis',
-      status: 'running', message: 'Running computer-vision analysis', progress: 30
+      status: 'running',
+      message: source.source_type === 'youtube' ? 'Scanning YouTube footage frames' : 'Running computer-vision analysis',
+      progress: 30
     });
 
     let analysis;
     try {
-      analysis = await analyzeFootage(base44, {
-        video_url: videoUrl,
-        reference_photos: project?.reference_photos || [],
-        player: project ? {
-          name: project.player_name, jersey_number: project.jersey_number,
-          team: project.team_name, position: project.position,
-          appearance: project.appearance_notes,
-          reference_photos: project.reference_photos
-        } : null
-      });
+      analysis = source.source_type === 'youtube'
+        ? await analyzeYouTubeFootage(base44, { videoId: source.external_id, reference_photos: refPhotos, player: playerObj })
+        : await analyzeFootage(base44, { video_url: source.file_url, reference_photos: refPhotos, player: playerObj });
     } catch (err) {
       await base44.entities.ProcessingJob.update(job.id, { status: 'failed', message: err.message });
       if (source.source_type !== 'file') {
         await base44.entities.VideoSource.update(source.id, { status: 'ready', progress: 100, clips_detected: 0 });
         if (project?.email) {
           await notifyPlayer(base44, project.email, 'Link ready for manual clips',
-            `Hi ${project.player_name},\n\nAutomatic analysis wasn't possible for "${source.title || source.url}" — the link can't be read directly. The source is ready: add clips manually by marking start/end timestamps from the Games tab.`);
+            `Hi ${project.player_name},\n\nAutomatic analysis wasn't possible for "${source.title || source.url}" — the footage couldn't be scanned automatically. The source is ready: add clips manually by marking start/end timestamps from the Games tab.`);
         }
         return Response.json({ ok: true, clips: 0, manual: true });
       }
