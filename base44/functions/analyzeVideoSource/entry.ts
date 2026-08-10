@@ -1,5 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { analyzeFootage, isAnalysisAvailable } from '../../shared/processingProvider.ts';
+import { analyzeFootage } from '../../shared/processingProvider.ts';
 import { notifyPlayer } from '../../shared/emailProvider.ts';
 
 const CONTEXT = { buckets: { pre: 6, post: 4 }, rebounds: { pre: 5, post: 3 }, blocks: { pre: 5, post: 4 }, shooting: { pre: 5, post: 4 } };

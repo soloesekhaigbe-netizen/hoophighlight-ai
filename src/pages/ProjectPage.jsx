@@ -8,7 +8,7 @@ import GamesTab from "@/components/project/GamesTab";
 import ClipsTab from "@/components/project/ClipsTab";
 import ExportsTab from "@/components/project/ExportsTab";
 import PortfolioTab from "@/components/project/PortfolioTab";
-import OutreachTab from "@/components/project/OutreachTab";
+import CoachOutreachTab from "@/components/project/CoachOutreachTab";
 import InquiriesTab from "@/components/project/InquiriesTab";
 import AnalyticsTab from "@/components/project/AnalyticsTab";
 import { CATEGORIES, ACTIVE_STATUSES } from "@/lib/categories";
@@ -86,7 +86,7 @@ export default function ProjectPage() {
           ))}
           <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
           <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
-          <TabsContent value="outreach"><OutreachTab {...shared} /></TabsContent>
+          <TabsContent value="outreach"><CoachOutreachTab {...shared} /></TabsContent>
           <TabsContent value="inquiries"><InquiriesTab {...shared} /></TabsContent>
           <TabsContent value="analytics"><AnalyticsTab {...shared} /></TabsContent>
         </div>

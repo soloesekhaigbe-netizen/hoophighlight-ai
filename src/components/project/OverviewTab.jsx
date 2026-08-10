@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Image } from "@/components/ui/image";
 import { CATEGORIES, ACTIVE_STATUSES, identityVerdict } from "@/lib/categories";
+import { profileCompletion, completionMissing } from "@/lib/portfolio";
 import { Upload, Trash2, Loader2, Crosshair, BadgeCheck } from "lucide-react";
 import PlayerCalibration from "@/components/project/PlayerCalibration";
 
@@ -43,6 +44,15 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-6">
+        <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] p-5">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Profile completion — {profileCompletion(project)}%</p>
+            <p className="text-xs text-slate-400">{completionMissing(project).length} field(s) missing</p>
+          </div>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-orange-500" style={{ width: `${profileCompletion(project)}%` }} />
+          </div>
+        </div>
         <div className="grid gap-4 sm:grid-cols-4">
           {[["GAMES", games.length], ["VIDEOS", sources.length],
             ["PROCESSING", sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).length],

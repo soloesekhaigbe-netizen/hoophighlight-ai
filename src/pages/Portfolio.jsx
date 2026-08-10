@@ -1,84 +1,52 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { CATEGORIES, catMeta } from "@/lib/categories";
-import { Loader2 } from "lucide-react";
 import PortfolioHeader from "@/components/portfolio/PortfolioHeader";
-import HighlightsSection from "@/components/portfolio/HighlightsSection";
-import GamesSection from "@/components/portfolio/GamesSection";
-import ContactSection from "@/components/portfolio/ContactSection";
+import HighlightsGrid from "@/components/portfolio/HighlightsGrid";
+import PortfolioGameList from "@/components/portfolio/PortfolioGameList";
+import ContactForm from "@/components/portfolio/ContactForm";
+import { Loader2 } from "lucide-react";
 
+// Public recruiting portfolio. Anyone can view (no account). Data is served by the
+// getPublicPortfolio backend function, which only returns public projects.
 export default function Portfolio() {
-  const { slug } = useParams();
+  const { id } = useParams();
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const res = await base44.functions.invoke("getPortfolio", { slug });
-        if (active) setData(res);
-      } catch (e) {
-        if (active) setError(e.message || "Not found");
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => { active = false; };
-  }, [slug]);
+    base44.functions.invoke("getPublicPortfolio", { project_id: id })
+      .then((res) => setData(res.data))
+      .catch((e) => setError(e.message || "Not available"));
+  }, [id]);
 
-  useEffect(() => {
-    if (data?.player?.id) {
-      base44.functions.invoke("trackPortfolioEvent", { project_id: data.player.id, event_type: "portfolio_view" }).catch(() => {});
-    }
-  }, [data?.player?.id]);
-
-  if (loading) {
+  if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-300">
-        <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-white px-6 text-center">
+        <p className="text-xl font-semibold text-slate-800">Portfolio not available</p>
+        <p className="text-sm text-slate-500">{error}</p>
+        <p className="text-xs text-slate-400">This portfolio may be private or the link is incorrect.</p>
       </div>
     );
   }
-  if (error || !data) {
+  if (!data) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-2 bg-slate-950 px-6 text-center text-slate-300">
-        <p className="text-lg font-semibold">Portfolio not found</p>
-        <p className="text-sm text-slate-500">This player's portfolio isn't public or doesn't exist.</p>
+      <div className="flex min-h-screen items-center justify-center bg-white">
+        <Loader2 className="h-7 w-7 animate-spin text-orange-500" />
       </div>
     );
   }
-
-  const { player, clips, tapes, games } = data;
-  const clipsByCategory = CATEGORIES.map((c) => ({
-    category: c,
-    clips: clips.filter((x) => x.category === c.key),
-  })).filter((g) => g.clips.length > 0);
-  const readyTapes = tapes.filter((t) => t.status === "ready");
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <PortfolioHeader player={player} tapeCount={readyTapes.length} clipCount={clips.length} />
-      <main className="mx-auto max-w-5xl space-y-16 px-6 py-12">
-        {player.bio && (
-          <section>
-            <h2 className="text-[11px] tracking-[0.3em] text-orange-400">ABOUT</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300">{player.bio}</p>
-          </section>
-        )}
-        <HighlightsSection
-          projectId={player.id}
-          tapes={readyTapes}
-          groups={clipsByCategory}
-          gameIdMap={Object.fromEntries(games.map((g) => [g.id, g]))}
-        />
-        {games.length > 0 && <GamesSection games={games} />}
-        <ContactSection player={player} />
+    <div className="min-h-screen bg-white text-slate-900">
+      <PortfolioHeader project={data.project} />
+      <main className="mx-auto max-w-5xl space-y-14 px-5 py-12">
+        <HighlightsGrid clips={data.clips} tapes={data.tapes} projectId={data.project.id} />
+        <PortfolioGameList games={data.games} />
+        <ContactForm projectId={data.project.id} />
       </main>
-      <footer className="border-t border-white/5 py-8 text-center text-[11px] tracking-[0.2em] text-slate-600">
-        POWERED BY HOOOHIGHLIGHT AI
+      <footer className="border-t border-slate-200 py-8 text-center text-xs text-slate-400">
+        Recruiting portfolio · {data.project.player_name}
       </footer>
     </div>
   );

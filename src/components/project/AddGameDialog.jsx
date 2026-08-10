@@ -115,7 +115,7 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
               placeholder={type === "veo" ? "https://app.veo.co/matches/..." : "https://www.youtube.com/watch?v=..."}
               className="mt-1 border-white/10 bg-white/5 font-mono text-xs" />
             <p className="mt-2 text-[11px] text-slate-500">
-              YouTube/Veo links need a connected processing service for stored clip extraction. Upload the file directly for the full pipeline.
+              YouTube/Veo links the Base44 environment cannot fetch directly won't produce stored clips. Upload the file for the full AI pipeline.
             </p>
           </div>
         )}

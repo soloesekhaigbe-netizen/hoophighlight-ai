@@ -2,196 +2,151 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { slugify, publicPortfolioUrl } from "@/lib/slugify";
-import { ACTIVE_STATUSES } from "@/lib/categories";
-import NewProjectDialog from "@/components/projects/NewProjectDialog";
-import { Plus, ExternalLink, CheckCircle2, Circle, Film, Scissors, Mail, Eye, Loader2 } from "lucide-react";
-
-const PROFILE_FIELDS = [
-  "player_name", "jersey_number", "team_name", "position", "height", "weight",
-  "city", "country", "school", "graduation_year", "bio", "profile_photo", "email", "academic_gpa",
-];
+import { Progress } from "@/components/ui/progress";
+import {
+  Film, Video, Loader2, Scissors, Mail, Eye, Share2, ArrowRight, CheckCircle2, AlertCircle,
+} from "lucide-react";
+import { ACTIVE_STATUSES, CATEGORIES } from "@/lib/categories";
+import { profileCompletion, completionMissing, portfolioReady, portfolioLink } from "@/lib/portfolio";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [project, setProject] = useState(null);
-  const [clips, setClips] = useState([]);
-  const [tapes, setTapes] = useState([]);
-  const [inquiries, setInquiries] = useState([]);
-  const [sources, setSources] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [data, setData] = useState({ project: null, games: [], sources: [], clips: [], tapes: [], inquiries: [], coaches: [], events: [] });
 
-  const load = async (u) => {
-    const me = u || await base44.auth.me().catch(() => null);
-    if (!me) { setLoading(false); return; }
-    setUser(me);
-    let projects = await base44.entities.Project.filter({ owner_user_id: me.id });
-
-    // Auto-create a starter portfolio on first visit so the player has one.
-    if (!projects || projects.length === 0) {
-      const starter = await base44.entities.Project.create({
-        player_name: me.full_name || "New Player",
-        jersey_number: "0", team_name: "Unassigned", position: "Unassigned",
-        email: me.email || "", owner_user_id: me.id,
-        slug: slugify(me.full_name || "new-player"),
-        is_public: true, show_email: false, intro_enabled: true, outro_enabled: true,
-        identity_threshold: 90, calibrated: false,
-      });
-      projects = [starter];
+  const load = async () => {
+    const projects = await base44.entities.Project.list("-created_date");
+    let project = projects[0] || null;
+    if (!project) {
+      setCreating(true);
+      try {
+        const me = await base44.auth.me();
+        const name = me?.full_name || "New Player";
+        const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 26) || "player";
+        const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
+        project = await base44.entities.Project.create({
+          owner_user_id: me?.id || "",
+          player_name: name, jersey_number: "0", team_name: "Unassigned", position: "Unassigned",
+          email: me?.email || "", slug, is_public: true, show_email: false,
+          identity_threshold: 90, intro_enabled: true, outro_enabled: true, calibrated: false,
+        });
+        try {
+          await base44.integrations.Core.SendEmail({
+            to: me?.email, subject: "Welcome to Highlight Lab",
+            body: `Hi ${name},\n\nYour recruiting portfolio has been created. Complete your profile, upload a game, and the AI will detect your buckets, rebounds, blocks and shooting — then build your highlight tapes automatically.\n\nOpen your dashboard to get started.`,
+          });
+        } catch (_e) { /* email is best-effort */ }
+      } catch (_e) { project = null; }
+      setCreating(false);
     }
-    const p = projects[0];
-    setProject(p);
-    const [c, t, q, s] = await Promise.all([
-      base44.entities.Clip.filter({ project_id: p.id }),
-      base44.entities.HighlightTape.filter({ project_id: p.id }),
-      base44.entities.CoachInquiry.filter({ project_id: p.id }),
-      base44.entities.VideoSource.filter({ project_id: p.id }),
+    if (!project) { setLoading(false); return; }
+    const pid = project.id;
+    const [games, sources, clips, tapes, inquiries, coaches, events] = await Promise.all([
+      base44.entities.Game.filter({ project_id: pid }),
+      base44.entities.VideoSource.filter({ project_id: pid }),
+      base44.entities.Clip.filter({ project_id: pid }),
+      base44.entities.HighlightTape.filter({ project_id: pid }),
+      base44.entities.CoachInquiry.filter({ project_id: pid }),
+      base44.entities.Coach.filter({ project_id: pid }),
+      base44.entities.PortfolioEvent.filter({ project_id: pid }),
     ]);
-    setClips(c); setTapes(t); setInquiries(q); setSources(s);
+    setData({ project, games, sources, clips, tapes, inquiries, coaches, events });
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  if (loading) {
+  const { project, games, sources, clips, tapes, inquiries, coaches, events } = data;
+  const processing = sources.filter((s) => ACTIVE_STATUSES.includes(s.status));
+  const accepted = clips.filter((c) => c.status === "accepted");
+  const completion = profileCompletion(project);
+  const missing = completionMissing(project);
+  const ready = portfolioReady(project, accepted);
+  const views = events.filter((e) => e.event_type === "portfolio_view").length;
+  const newInquiries = inquiries.filter((q) => q.status === "new").length;
+
+  if (loading || creating) {
     return (
       <div className="flex items-center justify-center py-24">
-        <Loader2 className="h-6 w-6 animate-spin text-orange-400" />
+        <Loader2 className="h-7 w-7 animate-spin text-orange-400" />
       </div>
     );
   }
-  if (!project) return <p className="text-sm text-slate-400">Sign in to view your dashboard.</p>;
+  if (!project) {
+    return <div className="py-20 text-center text-slate-400">Could not load your portfolio. Try refreshing.</div>;
+  }
 
-  // Profile completion
-  const filled = PROFILE_FIELDS.filter((f) => {
-    const v = project[f];
-    if (f === "academic_gpa") return Boolean(v);
-    if (Array.isArray(v)) return v.length > 0;
-    return Boolean(v) && v !== "0" && v !== "Unassigned";
-  }).length;
-  const completion = Math.round((filled / PROFILE_FIELDS.length) * 100);
-
-  // Quality check
-  const checks = [
-    { ok: (project.reference_photos || []).length > 0, label: "At least one reference photo" },
-    { ok: project.calibrated !== false && Boolean(project.calibration_source_id), label: "Player calibrated" },
-    { ok: clips.some((c) => c.status === "accepted" && c.processing_status === "ready"), label: "At least one accepted clip" },
-    { ok: tapes.some((t) => t.status === "ready"), label: "At least one highlight tape" },
-    { ok: project.is_public !== false, label: "Portfolio is public" },
+  const stats = [
+    [Film, "GAMES", games.length],
+    [Loader2, "PROCESSING", processing.length],
+    [Scissors, "ACCEPTED CLIPS", accepted.length],
+    [Film, "TAPES READY", tapes.filter((t) => t.status === "ready").length],
+    [Eye, "PORTFOLIO VIEWS", views],
+    [Mail, "NEW INQUIRIES", newInquiries],
   ];
-  const passed = checks.filter((c) => c.ok).length;
-
-  const slug = project.slug || slugify(project.player_name);
-  const portfolioUrl = publicPortfolioUrl(slug);
-  const processing = sources.filter((s) => ACTIVE_STATUSES.includes(s.status));
 
   return (
     <div className="space-y-10">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="text-[11px] tracking-[0.34em] text-orange-400">MY PORTFOLIO</p>
+          <p className="text-[11px] tracking-[0.34em] text-orange-400">PLAYER DASHBOARD</p>
           <h1 className="mt-3 font-heading text-4xl font-semibold tracking-tight">
-            {project.player_name}{project.jersey_number && project.jersey_number !== "0" ? <span className="text-slate-600"> #{project.jersey_number}</span> : null}
+            {project.player_name}{project.jersey_number ? <span className="text-slate-500"> #{project.jersey_number}</span> : null}
           </h1>
-          <p className="mt-2 text-sm text-slate-400">{project.team_name || "Set your team"}{project.position && project.position !== "Unassigned" ? ` · ${project.position}` : ""}</p>
+          <p className="mt-2 text-sm text-slate-400">{project.team_name || "Unassigned"} · {project.position || "—"}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <a href={portfolioUrl} target="_blank" rel="noreferrer">
-            <Button variant="outline" className="border-white/10 bg-transparent text-slate-200 hover:bg-white/5">
-              <ExternalLink className="mr-2 h-4 w-4" /> View public page
-            </Button>
+        <div className="flex gap-3">
+          <a href={portfolioLink(project)} target="_blank" rel="noreferrer">
+            <Button variant="outline" className="border-white/15"><Share2 className="mr-2 h-4 w-4" /> View portfolio</Button>
           </a>
-          <Link to={`/project/${project.id}`}>
-            <Button className="bg-orange-500 text-slate-950 hover:bg-orange-400">Manage project</Button>
-          </Link>
+          <Button onClick={() => navigate(`/project/${project.id}`)} className="bg-orange-500 text-slate-950 hover:bg-orange-400">
+            Open project <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
 
-      {completion < 100 && (
-        <div className="rounded-3xl border border-orange-500/30 bg-orange-500/[0.06] p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-orange-200">Complete your profile</p>
-              <p className="mt-1 text-xs text-slate-400">Coaches can't find you until your profile is complete. Fill in your details, add reference photos, and calibrate player identification.</p>
-            </div>
-            <Link to={`/project/${project.id}`}>
-              <Button size="sm" className="bg-orange-500 text-slate-950 hover:bg-orange-400">Complete profile →</Button>
-            </Link>
+      <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-medium">Profile completion</p>
+            <p className="mt-1 text-xs text-slate-400">{completion}% — {ready ? "Portfolio is share-ready" : `${missing.length} fields missing`}</p>
           </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-orange-500 transition-all" style={{ width: `${completion}%` }} />
-          </div>
-          <p className="mt-2 text-right text-[11px] text-slate-500">{completion}% complete</p>
+          {ready ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-300">
+              <CheckCircle2 className="h-3.5 w-3.5" /> READY TO SHARE
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-semibold text-amber-300">
+              <AlertCircle className="h-3.5 w-3.5" /> COMPLETE PROFILE
+            </span>
+          )}
         </div>
-      )}
+        <Progress value={completion} className="mt-4 h-2 bg-white/10" />
+        {missing.length > 0 && (
+          <p className="mt-3 text-xs text-slate-500">Missing: {missing.slice(0, 6).join(", ")}{missing.length > 6 ? "…" : ""}</p>
+        )}
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          [Eye, "PORTFOLIO VIEWS", 0],
-          [Film, "HIGHLIGHT TAPES", tapes.filter((t) => t.status === "ready").length],
-          [Scissors, "ACCEPTED CLIPS", clips.filter((c) => c.status === "accepted").length],
-          [Mail, "COACH ENQUIRIES", inquiries.length],
-        ].map(([Icon, label, value]) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {stats.map(([Icon, label, value]) => (
           <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
             <Icon className="h-5 w-5 text-orange-400" />
             <p className="mt-4 text-3xl font-semibold">{value}</p>
-            <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-500">{label}</p>
+            <p className="mt-1 text-[11px] tracking-[0.2em] text-slate-500">{label}</p>
           </div>
         ))}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">RECRUITING QUALITY CHECK</p>
-          <p className="mt-1 text-xs text-slate-400">{passed}/{checks.length} ready for coaches.</p>
-          <ul className="mt-4 space-y-3">
-            {checks.map((c) => (
-              <li key={c.label} className="flex items-center gap-3 text-sm">
-                {c.ok ? <CheckCircle2 className="h-4 w-4 text-emerald-400" /> : <Circle className="h-4 w-4 text-slate-600" />}
-                <span className={c.ok ? "text-slate-200" : "text-slate-500"}>{c.label}</span>
-              </li>
-            ))}
-          </ul>
-          {passed < checks.length && (
-            <Link to={`/project/${project.id}`} className="mt-5 inline-block text-sm text-orange-400 hover:text-orange-300">
-              Fix remaining items →
-            </Link>
-          )}
-        </div>
-
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">QUICK LINKS</p>
-          <div className="mt-4 space-y-2">
-            <Link to={`/project/${project.id}`} className="block rounded-xl border border-white/5 px-4 py-3 text-sm hover:border-orange-500/40 hover:bg-white/5">
-              📹 Add game footage
-            </Link>
-            <Link to={`/project/${project.id}`} className="block rounded-xl border border-white/5 px-4 py-3 text-sm hover:border-orange-500/40 hover:bg-white/5">
-              🎬 Build highlight tapes
-            </Link>
-            <Link to={`/project/${project.id}`} className="block rounded-xl border border-white/5 px-4 py-3 text-sm hover:border-orange-500/40 hover:bg-white/5">
-              ✉️ Reach out to coaches
-            </Link>
-            <a href={portfolioUrl} target="_blank" rel="noreferrer" className="block rounded-xl border border-white/5 px-4 py-3 text-sm hover:border-orange-500/40 hover:bg-white/5">
-              🔗 Share your portfolio
-            </a>
-          </div>
-          {processing.length > 0 && (
-            <p className="mt-4 text-xs text-orange-300">{processing.length} video(s) still processing…</p>
-          )}
-        </div>
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        {CATEGORIES.map((c) => (
+          <Link key={c.key} to={`/project/${project.id}`} className={`rounded-2xl border border-white/5 p-5 transition hover:border-orange-500/40 ${c.bg}`}>
+            <p className="text-2xl">{c.emoji}</p>
+            <p className={`mt-3 text-2xl font-semibold ${c.accent}`}>{clips.filter((x) => x.category === c.key).length}</p>
+            <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-400">{c.label}</p>
+          </Link>
+        ))}
       </div>
-
-      {user && (user.role === "admin") && (
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">ADMIN</p>
-          <p className="mt-2 text-xs text-slate-400">Add another player project (admin only).</p>
-          <div className="mt-4">
-            <NewProjectDialog onCreated={(p) => navigate(`/project/${p.id}`)}
-              trigger={<Button size="sm" className="bg-orange-500 text-slate-950 hover:bg-orange-400"><Plus className="mr-2 h-4 w-4" /> Add player project</Button>} />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

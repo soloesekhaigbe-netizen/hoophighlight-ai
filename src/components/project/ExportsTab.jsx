@@ -65,7 +65,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                   </a>
                 ) : (
                   <span className="self-center text-[11px] text-slate-500">
-                    {tape?.status === "rendering" ? "Rendering video…" : "Playable in app · connect a render service for MP4 export"}
+                    {tape?.status === "rendering" ? "Building reel…" : "Continuous playable reel in-app"}
                   </span>
                 )}
               </div>
