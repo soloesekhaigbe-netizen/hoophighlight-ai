@@ -214,7 +214,7 @@ export default function ManualClipper({ project, games, sources, reload, default
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-w-3xl border-white/10 bg-slate-950 text-slate-100">
+      <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto border-white/10 bg-slate-950 text-slate-100">
         <DialogHeader><DialogTitle className="tracking-[0.16em]">CLIP MANUALLY</DialogTitle></DialogHeader>
         <div className="space-y-4">
           {videoOptions.length === 0 ? (
