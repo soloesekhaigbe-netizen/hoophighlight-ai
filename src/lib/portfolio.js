@@ -13,6 +13,7 @@ export function profileCompletion(project) {
 }
 
 export function completionMissing(project) {
+  if (!project) return COMPLETION_FIELDS;
   return COMPLETION_FIELDS.filter((f) => !filled(project[f]));
 }
 
