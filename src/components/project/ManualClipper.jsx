@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Scissors, Flag, Play } from "lucide-react";
+import { Scissors, Flag, Play, Loader2 } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
+import { useToast } from "@/components/ui/use-toast";
 
 // Show seconds with one decimal — manual marking benefits from sub-second precision.
 function fmt(s = 0) {
@@ -175,35 +176,45 @@ export default function ManualClipper({ project, games, sources, reload, default
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ video_source_id: "", category: defaultCategory || "buckets", start: 0, end: 8, description: "" });
   const [savedClips, setSavedClips] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   const videoOptions = sources.filter((s) => s.status === "ready" || s.status === "error");
   const selected = sources.find((s) => s.id === form.video_source_id);
   const valid = !!form.video_source_id && Number(form.end) > Number(form.start);
 
   const save = async () => {
-    if (!valid) return;
+    if (!valid || saving) return;
+    setSaving(true);
     const src = sources.find((s) => s.id === form.video_source_id);
     const start = Number(form.start) || 0;
     const end = Number(form.end) || start + 8;
-    await base44.entities.Clip.create({
-      project_id: project.id,
-      game_id: src?.game_id || "",
-      video_source_id: form.video_source_id,
-      category: form.category,
-      description: form.description || "Manually clipped",
-      start_seconds: start,
-      end_seconds: end,
-      event_seconds: start + (end - start) / 2,
-      confidence: 100,
-      status: "accepted",
-      order_index: 999,
-      detection_source: "manual",
-      clip_url: src?.file_url || "",
-      processing_status: "ready",
-    });
-    setSavedClips((prev) => [...prev, { category: form.category, start, end, description: form.description || "Manually clipped" }]);
-    setForm((f) => ({ ...f, start: 0, end: 8, description: "" }));
-    reload();
+    try {
+      await base44.entities.Clip.create({
+        project_id: project.id,
+        game_id: src?.game_id || "",
+        video_source_id: form.video_source_id,
+        category: form.category,
+        description: form.description || "Manually clipped",
+        start_seconds: start,
+        end_seconds: end,
+        event_seconds: start + (end - start) / 2,
+        confidence: 100,
+        status: "accepted",
+        order_index: 999,
+        detection_source: "manual",
+        clip_url: src?.file_url || "",
+        processing_status: "ready",
+      });
+      setSavedClips((prev) => [...prev, { category: form.category, start, end, description: form.description || "Manually clipped" }]);
+      setForm((f) => ({ ...f, start: 0, end: 8, description: "" }));
+      await reload();
+      toast({ title: "Clip saved", description: `${fmt(start)} → ${fmt(end)}` });
+    } catch (e) {
+      toast({ title: "Could not save clip", description: e?.message || "Please try again", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const done = () => {
@@ -301,9 +312,9 @@ export default function ManualClipper({ project, games, sources, reload, default
               )}
 
               <div className="flex gap-3">
-                <Button onClick={save} disabled={!valid}
+                <Button onClick={save} disabled={!valid || saving}
                   className="flex-1 bg-orange-500 font-semibold tracking-widest text-slate-950 hover:bg-orange-400 disabled:opacity-50">
-                  SAVE CLIP
+                  {saving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> SAVING…</> : "SAVE CLIP"}
                 </Button>
                 <Button onClick={done} variant="outline"
                   className="border-white/15 bg-transparent px-6 hover:bg-white/10">
