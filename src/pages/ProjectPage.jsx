@@ -7,22 +7,29 @@ import OverviewTab from "@/components/project/OverviewTab";
 import GamesTab from "@/components/project/GamesTab";
 import ClipsTab from "@/components/project/ClipsTab";
 import ExportsTab from "@/components/project/ExportsTab";
+import PortfolioTab from "@/components/project/PortfolioTab";
+import OutreachTab from "@/components/project/OutreachTab";
+import InquiriesTab from "@/components/project/InquiriesTab";
+import AnalyticsTab from "@/components/project/AnalyticsTab";
 import { CATEGORIES, ACTIVE_STATUSES } from "@/lib/categories";
 
 export default function ProjectPage() {
   const { id } = useParams();
-  const [state, setState] = useState({ project: null, games: [], sources: [], clips: [], tapes: [] });
+  const [state, setState] = useState({ project: null, games: [], sources: [], clips: [], tapes: [], coaches: [], inquiries: [], events: [] });
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const [project, games, sources, clips, tapes] = await Promise.all([
+    const [project, games, sources, clips, tapes, coaches, inquiries, events] = await Promise.all([
       base44.entities.Project.get(id),
       base44.entities.Game.filter({ project_id: id }),
       base44.entities.VideoSource.filter({ project_id: id }),
       base44.entities.Clip.filter({ project_id: id }),
       base44.entities.HighlightTape.filter({ project_id: id }),
+      base44.entities.Coach.filter({ project_id: id }),
+      base44.entities.CoachInquiry.filter({ project_id: id }),
+      base44.entities.PortfolioEvent.filter({ project_id: id }),
     ]);
-    setState({ project, games, sources, clips, tapes });
+    setState({ project, games, sources, clips, tapes, coaches, inquiries, events });
     setLoading(false);
   }, [id]);
 
@@ -35,11 +42,11 @@ export default function ProjectPage() {
     return () => clearInterval(t);
   }, [state.sources, load]);
 
-  const { project, games, sources, clips, tapes } = state;
+  const { project, games, sources, clips, tapes, coaches, inquiries, events } = state;
   if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
   if (!project) return <p className="text-sm text-slate-400">Project not found.</p>;
 
-  const shared = { project, games, sources, clips, tapes, reload: load };
+  const shared = { project, games, sources, clips, tapes, coaches, inquiries, events, reload: load };
 
   return (
     <div className="space-y-8">
@@ -59,7 +66,8 @@ export default function ProjectPage() {
       <Tabs defaultValue="overview">
         <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-white/5 p-1">
           {[["overview", "OVERVIEW"], ["games", "GAMES"], ["clips", "CLIPS"],
-            ...CATEGORIES.map((c) => [c.key, c.label]), ["exports", "EXPORTS"]].map(([v, l]) => (
+            ...CATEGORIES.map((c) => [c.key, c.label]), ["exports", "EXPORTS"],
+            ["portfolio", "PORTFOLIO"], ["outreach", "OUTREACH"], ["inquiries", "INQUIRIES"], ["analytics", "ANALYTICS"]].map(([v, l]) => (
             <TabsTrigger key={v} value={v}
               className="text-[11px] tracking-[0.18em] data-[state=active]:bg-orange-500 data-[state=active]:text-slate-950">
               {l}
@@ -77,6 +85,10 @@ export default function ProjectPage() {
             </TabsContent>
           ))}
           <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
+          <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
+          <TabsContent value="outreach"><OutreachTab {...shared} /></TabsContent>
+          <TabsContent value="inquiries"><InquiriesTab {...shared} /></TabsContent>
+          <TabsContent value="analytics"><AnalyticsTab {...shared} /></TabsContent>
         </div>
       </Tabs>
     </div>

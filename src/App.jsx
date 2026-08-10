@@ -15,6 +15,7 @@ import ResetPassword from '@/pages/ResetPassword';
 import AppLayout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import ProjectPage from '@/pages/ProjectPage';
+import Portfolio from '@/pages/Portfolio';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -46,6 +47,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/portfolio/:slug" element={<Portfolio />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />

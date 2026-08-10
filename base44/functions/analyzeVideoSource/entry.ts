@@ -1,21 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getProviderConfig, requestAnalysis } from '../../shared/processingProvider.ts';
+import { analyzeFootage, isAnalysisAvailable } from '../../shared/processingProvider.ts';
+import { notifyPlayer } from '../../shared/emailProvider.ts';
 
-async function checkYoutubeAccess(videoId) {
-  const res = await fetch('https://www.youtube.com/oembed?format=json&url=https://www.youtube.com/watch?v=' + videoId);
-  if (res.status === 200) {
-    const data = await res.json();
-    return { accessible: true, title: data.title };
-  }
-  if (res.status === 401 || res.status === 403) {
-    return { accessible: false, reason: 'This YouTube video is private or restricted, so it cannot be analysed. Make it unlisted or public, or upload the footage file directly.' };
-  }
-  return { accessible: false, reason: 'This YouTube video could not be found. It may have been deleted or the link is wrong.' };
-}
+const CONTEXT = { buckets: { pre: 6, post: 4 }, rebounds: { pre: 5, post: 3 }, blocks: { pre: 5, post: 4 }, shooting: { pre: 5, post: 4 } };
 
-// Honest pipeline: clips are NEVER created until the external processing provider
-// returns them with a real playable clip_url via the webhook. With no provider
-// configured the source is failed with a clear reason — no fake/estimated clips.
+// Base44-native analysis pipeline (no external provider):
+//   1. Verify the source is an uploaded file we can actually read (YouTube/Veo links
+//      that the environment cannot fetch are rejected honestly — upload the file).
+//   2. Run vision analysis via InvokeLLM to identify the player + detect events.
+//   3. Create a Clip per detected event. Each clip references the real uploaded
+//      video file and is played back bounded to its segment (real footage, no
+//      redirects, no fake URLs).
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -37,64 +32,97 @@ export default async function (req) {
         project_id: source.project_id, video_source_id: source.id, job_type: 'analysis',
         status: 'failed', message, progress: 0
       });
+      if (project?.email) {
+        await notifyPlayer(base44, project.email, 'Processing failed', `Hi ${project.player_name},\n\nProcessing failed for "${source.title || source.url}":\n${message}\n\nYou can fix the source or add clips manually from the Games tab.`);
+      }
       return Response.json({ ok: false, error: message }, { status: 200 });
     };
 
-    const config = getProviderConfig();
-    if (!config.configured) {
+    // Only real, accessible files can be analysed natively. External URLs that the
+    // Base44 environment cannot legally/technically fetch must be uploaded instead.
+    if (source.source_type !== 'file' || !source.file_url) {
       return await fail(
-        'No video processing provider is connected. Add VIDEO_PROCESSOR_URL and VIDEO_PROCESSOR_API_KEY to enable real computer-vision analysis and clip extraction. Until then, clips cannot be created.'
+        'This source is a link (YouTube/Veo) that the Base44 environment cannot fetch directly. Please upload the authorised video file and it will be analysed automatically.'
       );
     }
 
-    await base44.entities.VideoSource.update(source.id, { status: 'downloading', progress: 10, error_message: '' });
-
-    let title = source.title || '';
-    if (source.source_type === 'file') {
-      title = source.title || 'Uploaded footage';
-    } else if (source.source_type === 'youtube') {
-      const access = await checkYoutubeAccess(source.external_id);
-      if (!access.accessible) return await fail(access.reason);
-      title = access.title;
-    } else if (source.source_type === 'veo') {
-      const res = await fetch(source.url, { method: 'GET' });
-      if (res.status === 401 || res.status === 403) {
-        return await fail('This Veo recording requires a login, so the processing provider cannot access it. Upload the footage file directly, or share a public link the provider can reach.');
-      }
-      if (res.status === 404) return await fail('This Veo recording could not be found. The link may be wrong or the match was removed.');
-    } else {
-      return await fail('This link type is not supported.');
-    }
+    await base44.entities.VideoSource.update(source.id, { status: 'analysing', progress: 20, error_message: '' });
 
     const job = await base44.entities.ProcessingJob.create({
       project_id: source.project_id, video_source_id: source.id, job_type: 'analysis',
-      status: 'queued', provider: 'external', message: 'Sent to processing provider', progress: 15
+      status: 'running', message: 'Running computer-vision analysis', progress: 30
     });
 
+    let analysis;
     try {
-      const result = await requestAnalysis(config, {
-        video_url: source.file_url || source.url,
-        source_type: source.source_type,
-        job_ref: job.id,
-        webhook_secret: config.webhookSecret,
+      analysis = await analyzeFootage(base44, {
+        video_url: source.file_url,
+        reference_photos: project?.reference_photos || [],
         player: project ? {
           name: project.player_name, jersey_number: project.jersey_number,
-          team: project.team_name, position: project.position, appearance: project.appearance_notes,
-          reference_photos: Array.isArray(project.reference_photos) ? project.reference_photos : [],
-          calibrated: project.calibrated !== false
-        } : null,
-        categories: ['buckets', 'rebounds', 'blocks', 'shooting'],
-        context_windows: { buckets: { pre: 6, post: 4 }, rebounds: { pre: 5, post: 3 }, blocks: { pre: 5, post: 4 }, shooting: { pre: 5, post: 4 } }
+          team: project.team_name, position: project.position,
+          appearance: project.appearance_notes,
+          reference_photos: project.reference_photos
+        } : null
       });
-      await base44.entities.ProcessingJob.update(job.id, { status: 'running', provider_job_id: result.job_id || '', progress: 25 });
-      await base44.entities.VideoSource.update(source.id, {
-        status: 'processing', progress: 25, title, provider: 'external', provider_job_id: result.job_id || ''
-      });
-      return Response.json({ ok: true, mode: 'external', job_id: result.job_id || job.id });
     } catch (err) {
       await base44.entities.ProcessingJob.update(job.id, { status: 'failed', message: err.message });
-      return await fail('The processing provider could not start this job: ' + err.message);
+      return await fail('The analysis model could not process this video: ' + err.message + ' You can still add clips manually from the Games tab.');
     }
+
+    const ctx = (cat) => CONTEXT[cat] || { pre: 5, post: 4 };
+    const events = analysis.events || [];
+    const created = [];
+    for (const ev of events) {
+      const pre = ctx(ev.category).pre;
+      const post = ctx(ev.category).post;
+      const start = Number(ev.start_seconds ?? (ev.event_seconds - pre));
+      const end = Number(ev.end_seconds ?? (ev.event_seconds + post));
+      const clip = await base44.entities.Clip.create({
+        player_id: project?.owner_user_id || user.id,
+        project_id: source.project_id,
+        game_id: source.game_id || '',
+        video_source_id: source.id,
+        category: ev.category,
+        play_type: ev.play_type || '',
+        description: ev.description || '',
+        event_seconds: Number(ev.event_seconds || (start + end) / 2),
+        start_seconds: Math.max(0, start),
+        end_seconds: end,
+        confidence: Number(ev.confidence || 0),
+        play_confidence: Number(ev.confidence || 0),
+        identity_confidence: Number(analysis.identity_confidence || 0),
+        player_confirmed: analysis.player_identified ? 'unconfirmed' : 'unconfirmed',
+        player_track_id: '',
+        status: 'pending',
+        detection_source: 'ai-vision',
+        clip_url: source.file_url,
+        thumbnail_url: '',
+        processing_status: analysis.player_identified ? 'ready' : 'review_required'
+      });
+      created.push(clip.id);
+    }
+
+    const reviewRequired = !analysis.player_identified;
+    await base44.entities.ProcessingJob.update(job.id, {
+      status: 'succeeded', progress: 100,
+      message: reviewRequired ? 'Analysis complete — confirm player identity' : `Analysis complete — ${created.length} clips`
+    });
+    await base44.entities.VideoSource.update(source.id, {
+      status: 'ready', progress: 100, clips_detected: created.length
+    });
+
+    if (project?.email) {
+      if (created.length > 0) {
+        await notifyPlayer(base44, project.email, 'Highlights ready for review',
+          `Hi ${project.player_name},\n\n${created.length} clips were detected in "${source.title || 'your footage'}" and are ready for your review.\n${reviewRequired ? 'Please confirm which clips feature you before they are added to your highlight tapes.' : ''}\n\nOpen your dashboard to review them.`);
+      } else {
+        await notifyPlayer(base44, project.email, 'Analysis finished',
+          `Hi ${project.player_name},\n\nNo confident events were detected in "${source.title || 'your footage'}". You can add clips manually from the Games tab.`);
+      }
+    }
+
+    return Response.json({ ok: true, clips: created.length, player_identified: analysis.player_identified });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }

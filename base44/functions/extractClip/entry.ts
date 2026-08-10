@@ -1,9 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getProviderConfig, requestExtraction } from '../../shared/processingProvider.ts';
 
-// Re-attempt extraction for a single clip. A real extraction job is requested from
-// the external provider; the clip is only marked ready once the provider returns a
-// playable clip_url via the webhook. With no provider, extraction cannot happen.
+// Clips play the real uploaded source file bounded to their segment, so no separate
+// extraction step is needed. This endpoint simply ensures the clip references the
+// source file and is marked ready for review (used by the "retry" action).
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -17,44 +16,20 @@ export default async function (req) {
     if (!clip) return Response.json({ error: 'Clip not found' }, { status: 404 });
 
     const source = await base44.entities.VideoSource.get(clip.video_source_id);
-    if (!source) return Response.json({ error: 'Source video not found' }, { status: 404 });
-
-    const config = getProviderConfig();
-    if (!config.configured) {
+    if (!source || !source.file_url) {
       await base44.entities.Clip.update(clip.id, {
         processing_status: 'failed',
-        extraction_error: 'No video processing provider is connected. Add VIDEO_PROCESSOR_URL and VIDEO_PROCESSOR_API_KEY to extract clips.'
+        extraction_error: 'The source video file is unavailable. Re-upload the footage.'
       });
-      return Response.json({ ok: false, error: 'No processing provider connected.' }, { status: 200 });
+      return Response.json({ ok: false, error: 'Source file unavailable.' }, { status: 200 });
     }
 
-    await base44.entities.Clip.update(clip.id, { processing_status: 'extracting', extraction_error: '' });
-
-    const job = await base44.entities.ProcessingJob.create({
-      project_id: clip.project_id, video_source_id: source.id, tape_id: '',
-      job_type: 'render', provider: 'external',
-      status: 'queued', message: 'Extracting clip', progress: 10
+    await base44.entities.Clip.update(clip.id, {
+      clip_url: source.file_url,
+      processing_status: 'ready',
+      extraction_error: ''
     });
-    try {
-      const result = await requestExtraction(config, {
-        job_ref: job.id,
-        video_url: source.file_url || source.url,
-        source_type: source.source_type,
-        start: clip.start_seconds,
-        end: clip.end_seconds,
-        clip_id: clip.id,
-        webhook_secret: config.webhookSecret
-      });
-      await base44.entities.ProcessingJob.update(job.id, { status: 'running', provider_job_id: result.job_id || '' });
-      return Response.json({ ok: true, mode: 'external', job_id: result.job_id || job.id });
-    } catch (err) {
-      await base44.entities.ProcessingJob.update(job.id, { status: 'failed', message: err.message });
-      await base44.entities.Clip.update(clip.id, {
-        processing_status: 'failed',
-        extraction_error: 'Clip processing failed: ' + err.message
-      });
-      return Response.json({ ok: false, error: err.message }, { status: 200 });
-    }
+    return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
