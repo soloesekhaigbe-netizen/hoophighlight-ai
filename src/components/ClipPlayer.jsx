@@ -144,7 +144,8 @@ function EmbedPlayer({ source, clip, autoplay }) {
     const params = new URLSearchParams({ rel: "0", modestbranding: "1", playsinline: "1", start: String(start) });
     if (end > start) params.set("end", String(end));
     if (autoplay) params.set("autoplay", "1");
-    src = `https://www.youtube.com/embed/${source.external_id}?${params.toString()}`;
+    if (typeof window !== "undefined" && window.location?.origin) params.set("origin", window.location.origin);
+    src = `https://www.youtube-nocookie.com/embed/${source.external_id}?${params.toString()}`;
   } else {
     src = `https://app.veo.co/matches/${source.external_id}/embed`;
   }
