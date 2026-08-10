@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { ACTIVE_STATUSES, CATEGORIES } from "@/lib/categories";
 import { profileCompletion, completionMissing, portfolioReady, portfolioLink } from "@/lib/portfolio";
+import SharePortfolioButton from "@/components/SharePortfolioButton";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -97,8 +98,9 @@ export default function Dashboard() {
           <p className="mt-2 text-sm text-slate-400">{project.team_name || "Unassigned"} · {project.position || "—"}</p>
         </div>
         <div className="flex gap-3">
+          <SharePortfolioButton project={project} label="Share portfolio" />
           <a href={portfolioLink(project)} target="_blank" rel="noreferrer">
-            <Button variant="outline" className="border-white/15"><Share2 className="mr-2 h-4 w-4" /> View portfolio</Button>
+            <Button variant="outline" className="border-white/15"><Eye className="mr-2 h-4 w-4" /> View</Button>
           </a>
           <Button onClick={() => navigate(`/project/${project.id}`)} className="bg-orange-500 text-slate-950 hover:bg-orange-400">
             Open project <ArrowRight className="ml-2 h-4 w-4" />

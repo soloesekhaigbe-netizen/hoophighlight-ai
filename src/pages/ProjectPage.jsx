@@ -12,6 +12,7 @@ import CoachOutreachTab from "@/components/project/CoachOutreachTab";
 import InquiriesTab from "@/components/project/InquiriesTab";
 import AnalyticsTab from "@/components/project/AnalyticsTab";
 import { CATEGORIES, ACTIVE_STATUSES } from "@/lib/categories";
+import SharePortfolioButton from "@/components/SharePortfolioButton";
 
 export default function ProjectPage() {
   const { id } = useParams();
@@ -54,13 +55,16 @@ export default function ProjectPage() {
         <ArrowLeft className="h-4 w-4" /> DASHBOARD
       </Link>
 
-      <div>
-        <p className="text-[11px] tracking-[0.3em] text-orange-400">
-          {[project.team_name, project.season].filter(Boolean).join(" · ") || "PLAYER PROJECT"}
-        </p>
-        <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-          {project.player_name}{project.jersey_number ? <span className="text-slate-600"> #{project.jersey_number}</span> : null}
-        </h1>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-[11px] tracking-[0.3em] text-orange-400">
+            {[project.team_name, project.season].filter(Boolean).join(" · ") || "PLAYER PROJECT"}
+          </p>
+          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
+            {project.player_name}{project.jersey_number ? <span className="text-slate-600"> #{project.jersey_number}</span> : null}
+          </h1>
+        </div>
+        <SharePortfolioButton project={project} label="Share portfolio" />
       </div>
 
       <Tabs defaultValue="overview">
