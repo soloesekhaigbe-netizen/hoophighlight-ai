@@ -210,8 +210,7 @@ async function refineEvent(base44, template, finest, ev) {
       prompt, file_urls: [sheet.url], model: VISION_MODEL, response_json_schema: REFINE_SCHEMA
     });
     if (res && typeof res.exact_second === 'number' && Number(res.frame_index) >= 0) {
-      const exact = Math.max(0, Number(res.exact_second));
-      return { start: Math.max(0, exact - 3), end: exact + 3, event: exact };
+      return { event: Math.max(0, Number(res.exact_second)) };
     }
   } catch (_e) {}
   return null;
@@ -275,20 +274,22 @@ export async function analyzeYouTubeFootage(base44, { videoId, reference_photos,
   const events = Array.isArray(result.events) ? result.events : [];
   // Refine each detected play's timestamp using the densest storyboard level
   // (only if it is finer than the detection level).
-  // Refine each detected play's timestamp. A different storyboard level (denser
-  // frames per sheet, or a finer step) gives the model more frames around the play
-  // to pinpoint the exact moment — even when the step is the same, a 100-frame sheet
-  // is far more precise for locating one play than the 9-frame detection sheet.
-  const finest = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#')));
-  if (finest && finest.level !== lvl.level) {
-    for (const ev of events.slice(0, 10)) {
-      const refined = await refineEvent(base44, template, finest, ev);
-      if (refined) {
-        ev.start_seconds = refined.start;
-        ev.end_seconds = refined.end;
-        ev.event_seconds = refined.event;
-      }
-    }
+  // Refine each play's timestamp, then set a generous window around it. Storyboard
+  // frames are ~10s apart, so a tight clip can miss the moment entirely — an 18s
+  // window centered on the estimate reliably contains the play with a little lead-in.
+  // Only trust a refinement that stays near the coarse estimate; a big jump means the
+  // model found a different, similar play, so we keep the original detection.
+  const refineLvl = pickFinestLevel(parts.slice(1).filter(Boolean).map((l) => l.split('#'))) || lvl;
+  for (const ev of events.slice(0, 10)) {
+    const coarseT = Number(ev.event_seconds || ev.start_seconds || 0);
+    let center = coarseT;
+    try {
+      const refined = await refineEvent(base44, template, refineLvl, ev);
+      if (refined && Math.abs(refined.event - coarseT) <= 15) center = refined.event;
+    } catch (_e) {}
+    ev.event_seconds = center;
+    ev.start_seconds = Math.max(0, center - 10);
+    ev.end_seconds = center + 8;
   }
   return {
     player_identified: Boolean(result.player_identified),
