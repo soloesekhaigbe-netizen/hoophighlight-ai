@@ -45,7 +45,7 @@
       "created_by_id": "{{user.id}}"
     },
     "create": {
-      "created_by_id": "{{user.id }}"
+      "created_by_id": "{{user.id}}"
     },
     "update": {
       "created_by_id": "{{user.id}}"
