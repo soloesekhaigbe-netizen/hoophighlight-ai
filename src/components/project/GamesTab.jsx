@@ -39,7 +39,7 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
 
       {games.length === 0 && (
         <div className="rounded-3xl border border-dashed border-white/10 p-14 text-center text-sm text-slate-400">
-          No games yet. Upload footage for automatic AI analysis, or add a Veo/YouTube link for manual clip marking.
+          No games yet. Upload footage or add a Veo/YouTube link to start automatic AI analysis.
         </div>
       )}
 
@@ -86,9 +86,9 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
                       <AlertTriangle className="h-4 w-4 shrink-0" />{s.error_message}
                     </p>
                   )}
-                  {s.source_type !== "file" && s.status === "ready" && (
+                  {s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0 && (
                     <p className="mt-3 flex gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3 text-xs text-sky-200">
-                      <Info className="h-4 w-4 shrink-0" />Link mode — auto-analysis isn't available. Add clips manually by marking start/end timestamps.
+                      <Info className="h-4 w-4 shrink-0" />Auto-analysis couldn't read this link — add clips manually by marking start/end timestamps.
                     </p>
                   )}
                 </div>

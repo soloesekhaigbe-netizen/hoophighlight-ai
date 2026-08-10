@@ -46,9 +46,9 @@ export default async function (req) {
         url: (raw || '').trim(),
         source_type: parsed.source_type,
         external_id: parsed.external_id,
-        title: title || (isLink ? 'Link source (manual mode)' : 'Video source'),
-        status: isLink ? 'ready' : 'queued',
-        progress: isLink ? 100 : 0
+        title: title || (isLink ? 'Link source' : 'Video source'),
+        status: 'queued',
+        progress: 0
       });
       created.push(source);
     }

@@ -38,13 +38,11 @@ export default async function (req) {
       return Response.json({ ok: false, error: message }, { status: 200 });
     };
 
-    // Only real, accessible files can be analysed natively. External URLs that the
-    // Base44 environment cannot legally/technically fetch must be uploaded instead.
-    if (source.source_type !== 'file' || !source.file_url) {
-      return await fail(
-        'This source is a link (YouTube/Veo) that the Base44 environment cannot fetch directly. Please upload the authorised video file and it will be analysed automatically.'
-      );
-    }
+    // Uploaded files are analysed directly. Link sources (YouTube/Veo) also attempt
+    // automatic vision analysis on the URL; if the model can't read the link we fall
+    // back to manual mode (source ready, clips added by marking timestamps).
+    const videoUrl = source.source_type === 'file' ? source.file_url : source.url;
+    if (!videoUrl) return await fail('No playable source found for this video.');
 
     await base44.entities.VideoSource.update(source.id, { status: 'analysing', progress: 20, error_message: '' });
 
@@ -56,7 +54,7 @@ export default async function (req) {
     let analysis;
     try {
       analysis = await analyzeFootage(base44, {
-        video_url: source.file_url,
+        video_url: videoUrl,
         reference_photos: project?.reference_photos || [],
         player: project ? {
           name: project.player_name, jersey_number: project.jersey_number,
@@ -67,6 +65,14 @@ export default async function (req) {
       });
     } catch (err) {
       await base44.entities.ProcessingJob.update(job.id, { status: 'failed', message: err.message });
+      if (source.source_type !== 'file') {
+        await base44.entities.VideoSource.update(source.id, { status: 'ready', progress: 100, clips_detected: 0 });
+        if (project?.email) {
+          await notifyPlayer(base44, project.email, 'Link ready for manual clips',
+            `Hi ${project.player_name},\n\nAutomatic analysis wasn't possible for "${source.title || source.url}" — the link can't be read directly. The source is ready: add clips manually by marking start/end timestamps from the Games tab.`);
+        }
+        return Response.json({ ok: true, clips: 0, manual: true });
+      }
       return await fail('The analysis model could not process this video: ' + err.message + ' You can still add clips manually from the Games tab.');
     }
 
@@ -96,9 +102,9 @@ export default async function (req) {
         player_track_id: '',
         status: 'pending',
         detection_source: 'ai-vision',
-        clip_url: source.file_url,
+        clip_url: source.source_type === 'file' ? source.file_url : '',
         thumbnail_url: '',
-        processing_status: analysis.player_identified ? 'ready' : 'review_required'
+        processing_status: 'ready'
       });
       created.push(clip.id);
     }
