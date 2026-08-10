@@ -39,14 +39,14 @@
   ],
   "rls": {
     "read": {
-      "created_by_id": "{{user.id}}"
+      "data.player_id": "{{user.id}}"
     },
     "create": {},
     "update": {
-      "created_by_id": "{{user.id}}"
+      "data.player_id": "{{user.id}}"
     },
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "data.player_id": "{{user.id}}"
     }
   }
 }
