@@ -5,6 +5,9 @@
     "project_id": {
       "type": "string"
     },
+    "player_id": {
+      "type": "string"
+    },
     "event_type": {
       "type": "string",
       "enum": [
@@ -27,11 +30,11 @@
   ],
   "rls": {
     "read": {
-      "created_by_id": "{{user.id}}"
+      "data.player_id": "{{user.id}}"
     },
     "create": {},
     "delete": {
-      "created_by_id": "{{user.id}}"
+      "data.player_id": "{{user.id}}"
     }
   }
 }
