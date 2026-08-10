@@ -11,11 +11,15 @@
     "url": {
       "type": "string"
     },
+    "file_url": {
+      "type": "string"
+    },
     "source_type": {
       "type": "string",
       "enum": [
         "veo",
         "youtube",
+        "file",
         "unsupported"
       ]
     },

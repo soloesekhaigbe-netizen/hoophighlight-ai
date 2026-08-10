@@ -8,12 +8,30 @@ export default async function (req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { project_id, game_id, urls } = body || {};
+    const { project_id, game_id, urls, file_url, title } = body || {};
     if (!project_id) return Response.json({ error: 'Missing project' }, { status: 400 });
 
-    const list = Array.isArray(urls) ? urls : [urls];
     const created = [];
     const rejected = [];
+
+    // Uploaded file source — directly downloadable, so real segment extraction works.
+    if (file_url) {
+      const source = await base44.entities.VideoSource.create({
+        project_id,
+        game_id: game_id || '',
+        url: file_url,
+        file_url,
+        source_type: 'file',
+        external_id: '',
+        title: title || 'Uploaded footage',
+        status: 'queued',
+        progress: 0
+      });
+      created.push(source);
+      return Response.json({ created, rejected });
+    }
+
+    const list = Array.isArray(urls) ? urls : [urls];
 
     for (const raw of list) {
       const parsed = parseVideoUrl(raw);

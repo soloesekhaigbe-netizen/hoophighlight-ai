@@ -14,10 +14,24 @@ export const fmtTime = (s = 0) => {
   return `${m}:${String(sec).padStart(2, "0")}`;
 };
 
+export const fmtClock = (s = 0) => {
+  const t = Math.max(0, Math.floor(s));
+  const m = Math.floor(t / 60);
+  const sec = t % 60;
+  return `${m}:${String(sec).padStart(2, "0")}`;
+};
+
 export const confidenceLabel = (c = 0) =>
   c >= 85 ? { text: "High", cls: "text-emerald-400" }
   : c >= 65 ? { text: "Medium", cls: "text-amber-400" }
   : { text: "Low", cls: "text-rose-400" };
+
+// Player-identity verdict relative to a project's configurable threshold.
+export const identityVerdict = (identityConfidence = 0, threshold = 90) => {
+  if (identityConfidence >= threshold) return { text: "AUTO-ACCEPT", cls: "text-emerald-400" };
+  if (identityConfidence >= 70) return { text: "REVIEW", cls: "text-amber-400" };
+  return { text: "REJECT", cls: "text-rose-400" };
+};
 
 export const STATUS_LABELS = {
   queued: "QUEUED",

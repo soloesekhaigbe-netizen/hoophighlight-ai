@@ -23,8 +23,31 @@
     "photo_url": {
       "type": "string"
     },
+    "reference_photos": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "appearance_notes": {
       "type": "string"
+    },
+    "identity_threshold": {
+      "type": "number",
+      "default": 90
+    },
+    "calibrated": {
+      "type": "boolean",
+      "default": false
+    },
+    "calibration_source_id": {
+      "type": "string"
+    },
+    "calibration_start": {
+      "type": "number"
+    },
+    "calibration_end": {
+      "type": "number"
     },
     "intro_enabled": {
       "type": "boolean",
@@ -39,7 +62,10 @@
     }
   },
   "required": [
-    "player_name"
+    "player_name",
+    "jersey_number",
+    "team_name",
+    "position"
   ],
   "rls": {
     "read": {

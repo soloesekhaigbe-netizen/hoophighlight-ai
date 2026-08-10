@@ -91,6 +91,7 @@ export default function ClipsTab({ project, games, sources, clips, reload, locke
         <div className="space-y-4">
           {visible.map((c) => (
             <ClipCard key={c.id} clip={c} reload={reload}
+              project={project}
               source={sources.find((s) => s.id === c.video_source_id)}
               game={games.find((g) => g.id === c.game_id)}
               onMove={(dir) => move(c, dir)} />

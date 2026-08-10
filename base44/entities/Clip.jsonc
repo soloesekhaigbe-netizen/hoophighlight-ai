@@ -38,6 +38,24 @@
     "confidence": {
       "type": "number"
     },
+    "play_confidence": {
+      "type": "number"
+    },
+    "identity_confidence": {
+      "type": "number"
+    },
+    "player_confirmed": {
+      "type": "string",
+      "enum": [
+        "unconfirmed",
+        "yes",
+        "no"
+      ],
+      "default": "unconfirmed"
+    },
+    "player_track_id": {
+      "type": "string"
+    },
     "status": {
       "type": "string",
       "enum": [
@@ -55,6 +73,25 @@
       "type": "string"
     },
     "detection_source": {
+      "type": "string"
+    },
+    "clip_url": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "processing_status": {
+      "type": "string",
+      "enum": [
+        "extracting",
+        "ready",
+        "failed",
+        "unprocessable"
+      ],
+      "default": "extracting"
+    },
+    "extraction_error": {
       "type": "string"
     }
   },

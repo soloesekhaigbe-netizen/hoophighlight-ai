@@ -48,7 +48,7 @@ export default function TapePreview({ open, onOpenChange, project, category, cli
                 {project.team_name && <p className="mt-4 text-xs tracking-[0.24em] text-slate-500">{project.team_name}{project.jersey_number ? ` · #${project.jersey_number}` : ""}</p>}
               </div>
             ) : clip ? (
-              <ClipPlayer source={source} start={clip.start_seconds} end={clip.end_seconds} autoplay />
+              <ClipPlayer clip={clip} source={source} autoplay onEnded={() => setIndex((i) => i + 1)} />
             ) : (
               <div className="flex aspect-video flex-col items-center justify-center rounded-xl bg-slate-900 text-center">
                 <p className="font-heading text-3xl font-semibold">{project.outro_text || project.player_name}</p>

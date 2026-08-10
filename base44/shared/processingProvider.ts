@@ -1,5 +1,5 @@
 // Modular adapter for the external video processing / computer-vision service.
-// Swap the provider by changing the two secrets below - nothing else in the app changes.
+// Swap the provider by changing the secrets below - nothing else in the app changes.
 import { secrets } from 'base44:runtime';
 
 function safeSecret(name) {
@@ -18,9 +18,8 @@ export function getProviderConfig() {
   return { baseUrl, apiKey, webhookSecret, configured: Boolean(baseUrl && apiKey) };
 }
 
-// Ask the external service to download + analyse the footage and call our webhook when done.
-export async function requestAnalysis(config, payload) {
-  const res = await fetch(config.baseUrl.replace(/\/$/, '') + '/analyze', {
+async function postJson(config, path, payload) {
+  const res = await fetch(config.baseUrl.replace(/\/$/, '') + path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + config.apiKey },
     body: JSON.stringify(payload)
@@ -34,17 +33,16 @@ export async function requestAnalysis(config, payload) {
   return data;
 }
 
+// Ask the external service to download + analyse the footage and call our webhook when done.
+export async function requestAnalysis(config, payload) {
+  return postJson(config, '/analyze', payload);
+}
+
+// Ask the external service to extract a single clip segment to a stored file.
+export async function requestExtraction(config, payload) {
+  return postJson(config, '/extract', payload);
+}
+
 export async function requestRender(config, payload) {
-  const res = await fetch(config.baseUrl.replace(/\/$/, '') + '/render', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + config.apiKey },
-    body: JSON.stringify(payload)
-  });
-  const text = await res.text();
-  let data = {};
-  try { data = JSON.parse(text); } catch (_e) { data = { raw: text }; }
-  if (!res.ok) {
-    throw new Error(data.message || data.error || ('Render service responded with ' + res.status));
-  }
-  return data;
+  return postJson(config, '/render', payload);
 }

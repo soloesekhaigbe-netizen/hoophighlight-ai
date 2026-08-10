@@ -35,6 +35,18 @@ export default async function (req) {
       return Response.json({ ok: true });
     }
 
+    // Single-clip extraction callback — update the specific clip.
+    if (job.job_type === 'render' && body.clip_id) {
+      const clipStatus = status === 'failed' ? 'failed' : status === 'succeeded' ? 'ready' : 'extracting';
+      await base44.asServiceRole.entities.Clip.update(body.clip_id, {
+        processing_status: clipStatus,
+        clip_url: body.video_url || '',
+        thumbnail_url: body.thumbnail_url || '',
+        extraction_error: status === 'failed' ? (body.message || 'Extraction failed') : ''
+      });
+      return Response.json({ ok: true });
+    }
+
     if (job.video_source_id) {
       if (status === 'failed') {
         await base44.asServiceRole.entities.VideoSource.update(job.video_source_id, {
@@ -46,21 +58,33 @@ export default async function (req) {
       const clips = Array.isArray(body.clips) ? body.clips : [];
       if (clips.length) {
         const source = await base44.asServiceRole.entities.VideoSource.get(job.video_source_id);
-        const rows = clips.map((c, i) => ({
-          project_id: job.project_id,
-          game_id: source ? source.game_id : '',
-          video_source_id: job.video_source_id,
-          category: c.category,
-          play_type: c.play_type || '',
-          description: c.description || '',
-          event_seconds: c.event_seconds || 0,
-          start_seconds: typeof c.start_seconds === 'number' ? c.start_seconds : Math.max(0, (c.event_seconds || 0) - 4),
-          end_seconds: typeof c.end_seconds === 'number' ? c.end_seconds : (c.event_seconds || 0) + 3,
-          confidence: Math.round(c.confidence || 0),
-          status: 'pending',
-          order_index: i,
-          detection_source: 'external'
-        }));
+        const rows = clips.map((c, i) => {
+          const playConf = Math.round(c.play_confidence || c.confidence || 0);
+          const idConf = Math.round(c.identity_confidence || playConf);
+          return {
+            project_id: job.project_id,
+            game_id: source ? source.game_id : '',
+            video_source_id: job.video_source_id,
+            category: c.category,
+            play_type: c.play_type || '',
+            description: c.description || '',
+            event_seconds: c.event_seconds || 0,
+            start_seconds: typeof c.start_seconds === 'number' ? c.start_seconds : Math.max(0, (c.event_seconds || 0) - 4),
+            end_seconds: typeof c.end_seconds === 'number' ? c.end_seconds : (c.event_seconds || 0) + 3,
+            confidence: playConf,
+            play_confidence: playConf,
+            identity_confidence: idConf,
+            player_confirmed: 'unconfirmed',
+            player_track_id: c.player_track_id || ('track_' + i),
+            status: 'pending',
+            order_index: i,
+            detection_source: 'external',
+            clip_url: c.clip_url || '',
+            thumbnail_url: c.thumbnail_url || '',
+            processing_status: c.clip_url ? 'ready' : 'extracting',
+            extraction_error: ''
+          };
+        });
         await base44.asServiceRole.entities.Clip.bulkCreate(rows);
       }
 

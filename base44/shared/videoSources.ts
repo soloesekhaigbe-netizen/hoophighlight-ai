@@ -31,10 +31,32 @@ export function parseVideoUrl(rawUrl) {
     return { ok: true, source_type: 'veo', external_id: m ? m[1] : parsed.pathname };
   }
 
+  // Direct, downloadable video file — the only source we can truly extract a segment from
+  // without an external processing service (the browser plays just the requested range).
+  if (/\.(mp4|webm|mov|m4v|ogv)(\?|#|$)/i.test(parsed.pathname)) {
+    return { ok: true, source_type: 'file', external_id: '' };
+  }
+
   return {
     ok: false,
-    error: 'Only Veo and YouTube links are supported right now. Paste a public Veo match link or a YouTube link you are authorised to use.'
+    error: 'Only Veo, YouTube or a direct video file link (.mp4 / .webm) are supported right now. For true clip extraction, upload the footage or paste a direct file link.'
   };
 }
 
 export const CATEGORIES = ['buckets', 'rebounds', 'blocks', 'shooting'];
+
+// Context window (seconds before / after the event) per category, so each clip shows the
+// full sequence of the play — not just the moment the ball goes through the hoop.
+export const CATEGORY_CONTEXT = {
+  buckets: { pre: 6, post: 4 },
+  rebounds: { pre: 5, post: 3 },
+  blocks: { pre: 5, post: 4 },
+  shooting: { pre: 5, post: 4 }
+};
+
+export function contextFor(category) {
+  return CATEGORY_CONTEXT[category] || { pre: 5, post: 3 };
+}
+
+export const UNPROCESSABLE_MESSAGE =
+  'This video cannot currently be processed. Please provide a video source that the processing service is authorised to access — upload the footage file directly, or connect an authorised video processing provider.';
