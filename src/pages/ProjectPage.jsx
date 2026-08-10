@@ -58,18 +58,18 @@ export default function ProjectPage() {
         <p className="text-[11px] tracking-[0.3em] text-orange-400">
           {[project.team_name, project.season].filter(Boolean).join(" · ") || "PLAYER PROJECT"}
         </p>
-        <h1 className="mt-2 font-heading text-4xl font-semibold tracking-tight">
+        <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
           {project.player_name}{project.jersey_number ? <span className="text-slate-600"> #{project.jersey_number}</span> : null}
         </h1>
       </div>
 
       <Tabs defaultValue="overview">
-        <TabsList className="flex w-full flex-wrap justify-start gap-1 bg-white/5 p-1">
+        <TabsList className="flex w-full gap-1 overflow-x-auto bg-white/5 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {[["overview", "OVERVIEW"], ["games", "GAMES"], ["clips", "CLIPS"],
             ...CATEGORIES.map((c) => [c.key, c.label]), ["exports", "EXPORTS"],
             ["portfolio", "PORTFOLIO"], ["outreach", "OUTREACH"], ["inquiries", "INQUIRIES"], ["analytics", "ANALYTICS"]].map(([v, l]) => (
             <TabsTrigger key={v} value={v}
-              className="text-[11px] tracking-[0.18em] data-[state=active]:bg-orange-500 data-[state=active]:text-slate-950">
+              className="shrink-0 whitespace-nowrap text-[11px] tracking-[0.18em] data-[state=active]:bg-orange-500 data-[state=active]:text-slate-950">
               {l}
             </TabsTrigger>
           ))}
