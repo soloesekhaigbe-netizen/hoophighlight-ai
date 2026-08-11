@@ -80,7 +80,13 @@ export default function ContactForm({ projectId, player }) {
           </Button>
         </div>
         {player?.email && (
-          <p className="sm:col-span-2 text-center text-xs text-paper/40">Or email directly: {player.email}</p>
+          <p className="sm:col-span-2 text-center text-xs text-paper/40">
+            Or email directly:{" "}
+            <a href={`mailto:${player.email}`} className="underline decoration-paper/30 hover:text-sun"
+              onClick={() => base44.functions.invoke("trackPortfolioEvent", { project_id: projectId, event_type: "link_click" }).catch(() => {})}>
+              {player.email}
+            </a>
+          </p>
         )}
       </div>
     </div>

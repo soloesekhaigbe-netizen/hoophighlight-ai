@@ -75,7 +75,8 @@ export default function Portfolio() {
           <div className="mt-8 flex flex-wrap gap-3">
             <SharePortfolioButton project={data.project} label="Share portfolio" tone="light" />
             {featured && (
-              <a href="#reel" className="inline-flex items-center gap-2 border border-paper/30 px-5 py-2.5 font-heading text-xs font-semibold uppercase tracking-[0.16em] text-paper transition hover:bg-paper hover:text-ink">
+              <a href="#reel" className="inline-flex items-center gap-2 border border-paper/30 px-5 py-2.5 font-heading text-xs font-semibold uppercase tracking-[0.16em] text-paper transition hover:bg-paper hover:text-ink"
+                onClick={() => base44.functions.invoke("trackPortfolioEvent", { project_id: data.project.id, event_type: "link_click" }).catch(() => {})}>
                 <Play className="h-4 w-4" /> Watch highlight reel
               </a>
             )}

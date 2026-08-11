@@ -143,14 +143,15 @@ export default function GamesTab({ project, games, sources, clips, tapes, reload
                   {processing && (
                     <Progress value={s.progress || 5} className="mt-3 h-1.5 bg-white/10" />
                   )}
-                  {s.error_message && (
+                  {s.status === "error" && s.error_message && (
                     <p className="mt-3 flex gap-2 rounded-xl border border-rose-500/25 bg-rose-500/10 p-3 text-xs text-rose-200">
                       <AlertTriangle className="h-4 w-4 shrink-0" />{s.error_message}
                     </p>
                   )}
-                  {s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0 && !s.error_message && (
+                  {s.source_type !== "file" && s.status === "ready" && (s.clips_detected || 0) === 0 && (
                     <p className="mt-3 flex gap-2 rounded-xl border border-sky-500/25 bg-sky-500/10 p-3 text-xs text-sky-200">
-                      <Info className="h-4 w-4 shrink-0" />No plays were detected automatically — add clips manually from the game workspace.
+                      <Info className="h-4 w-4 shrink-0" />
+                      Automatic detection isn't available for this link — YouTube doesn't serve video frames to the server for it. Open the game workspace to mark clips manually, or upload the video file for automatic detection.
                     </p>
                   )}
                 </div>

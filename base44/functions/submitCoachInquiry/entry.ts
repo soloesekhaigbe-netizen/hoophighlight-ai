@@ -12,13 +12,16 @@ export default async function (req) {
       return Response.json({ error: 'All fields are required.' }, { status: 400 });
     }
 
+    // Public endpoint — a coach has no account, so RLS on the user-scoped client
+    // would block the Project read. Use the service role to load the (public)
+    // project and persist the inquiry, exactly like getPublicPortfolio does.
     let project = null;
-    try { project = await base44.entities.Project.get(project_id); } catch (_e) { project = null; }
+    try { project = await base44.asServiceRole.entities.Project.get(project_id); } catch (_e) { project = null; }
     if (!project) return Response.json({ error: 'Portfolio not found.' }, { status: 404 });
     if (project.is_public === false) return Response.json({ error: 'This portfolio is not public.' }, { status: 403 });
 
     const player_id = project.owner_user_id || project.created_by_id || '';
-    await base44.entities.CoachInquiry.create({
+    await base44.asServiceRole.entities.CoachInquiry.create({
       project_id, player_id, coach_name, coach_email, school: school || '', message, status: 'new'
     });
 
