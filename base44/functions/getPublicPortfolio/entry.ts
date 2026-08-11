@@ -13,6 +13,13 @@ export default async function (req) {
     try {
       project = await base44.asServiceRole.entities.Project.get(project_id);
     } catch (_e) { project = null; }
+    // Shared links may use the project's slug instead of its id — resolve it.
+    if (!project && project_id) {
+      try {
+        const bySlug = await base44.asServiceRole.entities.Project.filter({ slug: project_id });
+        project = bySlug && bySlug.length ? bySlug[0] : null;
+      } catch (_e) { project = null; }
+    }
     if (!project) return Response.json({ error: 'Portfolio not found' }, { status: 404 });
     if (project.is_public === false) return Response.json({ error: 'This portfolio is private' }, { status: 403 });
 
