@@ -104,11 +104,11 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
       {/* Search + filters */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
-          <Input className="w-56 border-white/10 bg-white/5 pl-9" placeholder="Search clips…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/45" />
+          <Input className="w-56  pl-9" placeholder="Search clips…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <Select value={gameFilter} onValueChange={setGameFilter}>
-          <SelectTrigger className="w-40 border-white/10 bg-white/5"><SelectValue placeholder="Game" /></SelectTrigger>
+          <SelectTrigger className="w-40 "><SelectValue placeholder="Game" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All games</SelectItem>
             {games.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
@@ -116,7 +116,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
         </Select>
         {!lockedCategory && (
           <Select value={catFilter} onValueChange={setCatFilter}>
-            <SelectTrigger className="w-36 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-36 "><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All categories</SelectItem>
               {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {c.label}</SelectItem>)}
@@ -124,7 +124,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
           </Select>
         )}
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-32 "><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
@@ -133,7 +133,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
           </SelectContent>
         </Select>
         <Select value={reelFilter} onValueChange={setReelFilter}>
-          <SelectTrigger className="w-32 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-32 "><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">In any reel</SelectItem>
             <SelectItem value="used">Used in reel</SelectItem>
@@ -141,7 +141,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
           </SelectContent>
         </Select>
         <Select value={sort} onValueChange={setSort}>
-          <SelectTrigger className="w-36 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-36 "><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="order">Manual order</SelectItem>
             <SelectItem value="game">By game</SelectItem>
@@ -149,7 +149,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
             <SelectItem value="confidence">By score</SelectItem>
           </SelectContent>
         </Select>
-        <Button size="sm" variant={favesOnly ? "default" : "outline"} className={favesOnly ? "bg-orange-500 text-slate-950" : "border-white/15 bg-transparent"}
+        <Button size="sm" variant={favesOnly ? "default" : "outline"} className={favesOnly ? "" : ""}
           onClick={() => setFavesOnly((v) => !v)}>
           <Star className={`mr-1.5 h-3.5 w-3.5 ${favesOnly ? "fill-current" : ""}`} /> Favourites
         </Button>
@@ -157,8 +157,8 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
 
       <div className="flex flex-wrap items-center gap-2">
         {visible.length > 0 && (
-          <label className="flex items-center gap-2 text-xs text-slate-300">
-            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-orange-500" /> Select all
+          <label className="flex items-center gap-2 text-xs text-foreground/70">
+            <input type="checkbox" checked={allSelected} onChange={toggleAll} className="h-4 w-4 accent-primary" /> Select all
           </label>
         )}
         {selectedIds.length > 0 && (
@@ -166,24 +166,24 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
             <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete {selectedIds.length}
           </Button>
         )}
-        <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => bulk("accepted")}>Accept all shown</Button>
-        <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => bulk("rejected")}>Reject all shown</Button>
+        <Button size="sm" variant="outline" className="" onClick={() => bulk("accepted")}>Accept all shown</Button>
+        <Button size="sm" variant="outline" className="" onClick={() => bulk("rejected")}>Reject all shown</Button>
         <div className="ml-auto">
           <ManualClipper project={project} games={games} sources={sources} reload={reload} defaultCategory={lockedCategory} />
         </div>
       </div>
 
       {visible.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-white/10 p-14 text-center">
-          <Film className="mx-auto h-10 w-10 text-slate-500" />
+        <div className="glass squircle-lg border-dashed border-white/15 p-14 text-center">
+          <Film className="mx-auto h-10 w-10 text-foreground/45" />
           <p className="mt-4 font-heading text-lg">No clips match</p>
-          <p className="mt-1 text-sm text-slate-400">Try clearing filters or uploading a game.</p>
+          <p className="mt-1 text-sm text-foreground/55">Try clearing filters or uploading a game.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {visible.map((c) => (
             <div key={c.id} className="flex gap-3">
-              <input type="checkbox" checked={!!selected[c.id]} onChange={() => toggle(c.id)} className="mt-3 h-4 w-4 shrink-0 accent-orange-500" aria-label="Select clip" />
+              <input type="checkbox" checked={!!selected[c.id]} onChange={() => toggle(c.id)} className="mt-3 h-4 w-4 shrink-0 accent-primary" aria-label="Select clip" />
               <div className="min-w-0 flex-1">
                 <ClipCard clip={c} reload={reload} project={project} tapes={tapes}
                   source={sources.find((s) => s.id === c.video_source_id)} game={games.find((g) => g.id === c.game_id)} onMove={(dir) => move(c, dir)} />

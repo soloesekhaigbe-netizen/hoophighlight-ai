@@ -66,14 +66,14 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="border-white/10 bg-slate-950 text-slate-100 sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle className="tracking-[0.16em]">ADD GAME</DialogTitle></DialogHeader>
 
         <div className="grid grid-cols-3 gap-2">
           {[["file", "UPLOAD FILE"], ["veo", "VEO LINK"], ["youtube", "YOUTUBE"]].map(([k, label]) => (
             <button key={k} onClick={() => setType(k)}
-              className={`rounded-xl border px-3 py-3 text-[11px] font-semibold tracking-[0.16em] transition ${
-                type === k ? "border-orange-500 bg-orange-500/10 text-orange-300" : "border-white/10 text-slate-400 hover:border-white/25"
+              className={`squircle-sm border px-3 py-3 text-[11px] font-semibold tracking-[0.16em] transition ${
+                type === k ? "border-primary bg-primary/10 text-primary" : "border-white/10 text-foreground/55 hover:border-white/25"
               }`}>
               {label}
             </button>
@@ -82,46 +82,46 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
 
         <div className="grid gap-3 sm:grid-cols-3">
           <div className="sm:col-span-3">
-            <Label className="text-xs text-slate-400">Game name</Label>
-            <Input className="mt-1 border-white/10 bg-white/5" value={form.name || ""} placeholder="Regional Semi-Final"
+            <Label className="text-xs text-foreground/55">Game name</Label>
+            <Input className="mt-1 " value={form.name || ""} placeholder="Regional Semi-Final"
               onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
           <div className="sm:col-span-2">
-            <Label className="text-xs text-slate-400">Opponent</Label>
-            <Input className="mt-1 border-white/10 bg-white/5" value={form.opponent || ""}
+            <Label className="text-xs text-foreground/55">Opponent</Label>
+            <Input className="mt-1 " value={form.opponent || ""}
               onChange={(e) => setForm({ ...form, opponent: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs text-slate-400">Date</Label>
-            <Input type="date" className="mt-1 border-white/10 bg-white/5" value={form.game_date || ""}
+            <Label className="text-xs text-foreground/55">Date</Label>
+            <Input type="date" className="mt-1 " value={form.game_date || ""}
               onChange={(e) => setForm({ ...form, game_date: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs text-slate-400">Team</Label>
-            <Input className="mt-1 border-white/10 bg-white/5" value={form.team || ""} placeholder="Titans"
+            <Label className="text-xs text-foreground/55">Team</Label>
+            <Input className="mt-1 " value={form.team || ""} placeholder="Titans"
               onChange={(e) => setForm({ ...form, team: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs text-slate-400">Competition</Label>
-            <Input className="mt-1 border-white/10 bg-white/5" value={form.competition || ""} placeholder="Premier League"
+            <Label className="text-xs text-foreground/55">Competition</Label>
+            <Input className="mt-1 " value={form.competition || ""} placeholder="Premier League"
               onChange={(e) => setForm({ ...form, competition: e.target.value })} />
           </div>
           <div>
-            <Label className="text-xs text-slate-400">Venue</Label>
-            <Input className="mt-1 border-white/10 bg-white/5" value={form.venue || ""} placeholder="Northampton"
+            <Label className="text-xs text-foreground/55">Venue</Label>
+            <Input className="mt-1 " value={form.venue || ""} placeholder="Northampton"
               onChange={(e) => setForm({ ...form, venue: e.target.value })} />
           </div>
         </div>
 
         {type === "file" ? (
           <div>
-            <Label className="text-xs text-slate-400">Upload game footage (.mp4 / .webm)</Label>
-            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 p-8 text-center hover:border-orange-500/50">
-              {uploading ? <Loader2 className="h-6 w-6 animate-spin text-orange-400" /> : <Upload className="h-6 w-6 text-slate-400" />}
-              <span className="text-sm text-slate-300">
+            <Label className="text-xs text-foreground/55">Upload game footage (.mp4 / .webm)</Label>
+            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 squircle border border-dashed border-white/15 p-8 text-center hover:border-primary/50">
+              {uploading ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <Upload className="h-6 w-6 text-foreground/55" />}
+              <span className="text-sm text-foreground/70">
                 {uploadFile ? uploadFile.name : "Click to choose a video file"}
               </span>
-              <span className="text-[11px] text-slate-500">
+              <span className="text-[11px] text-foreground/45">
                 Uploaded footage is fully processed — real clip segments are extracted and played.
               </span>
               <input type="file" accept="video/*" className="hidden"
@@ -130,20 +130,20 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
           </div>
         ) : (
           <div>
-            <Label className="text-xs text-slate-400">
+            <Label className="text-xs text-foreground/55">
               {type === "veo" ? "Veo match links" : "YouTube links"} — one per line
             </Label>
             <Textarea rows={4} value={urls} onChange={(e) => setUrls(e.target.value)}
               placeholder={type === "veo" ? "https://app.veo.co/matches/..." : "https://www.youtube.com/watch?v=..."}
-              className="mt-1 border-white/10 bg-white/5 font-mono text-xs" />
-            <p className="mt-2 text-[11px] text-slate-500">
+              className="mt-1  font-mono text-xs" />
+            <p className="mt-2 text-[11px] text-foreground/45">
               Links try automatic AI analysis first — add clips manually if none are detected.
             </p>
           </div>
         )}
 
         {errors.length > 0 && (
-          <div className="space-y-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">
+          <div className="space-y-2 squircle-sm border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-200">
             {errors.map((e, i) => (
               <p key={i} className="flex gap-2"><AlertTriangle className="h-4 w-4 shrink-0" />{e.url ? `${e.url}: ` : ""}{e.error}</p>
             ))}
@@ -151,7 +151,7 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
         )}
 
         <Button onClick={submit} disabled={busy || uploading}
-          className="w-full bg-orange-500 font-semibold tracking-widest text-slate-950 hover:bg-orange-400">
+          className="w-full">
           {busy || uploading ? "PROCESSING..." : "START PROCESSING"}
         </Button>
       </DialogContent>

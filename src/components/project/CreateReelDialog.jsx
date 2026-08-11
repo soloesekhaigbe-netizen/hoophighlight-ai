@@ -77,72 +77,72 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
     <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (o && presetGameIds) setSelectedGames(presetGameIds); }}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button className="h-11 bg-orange-500 px-7 font-semibold tracking-[0.18em] text-slate-950 hover:bg-orange-400">
+          <Button className="h-11 px-7">
             <Sparkles className="mr-2 h-4 w-4" /> CREATE HIGHLIGHT REEL
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[88vh] overflow-y-auto border-white/10 bg-slate-950 text-slate-100">
+      <DialogContent className="max-h-[88vh] overflow-y-auto">
         <DialogHeader><DialogTitle className="tracking-[0.16em]">✨ CREATE HIGHLIGHT REEL</DialogTitle></DialogHeader>
 
         {!playableGames.length ? (
-          <p className="text-sm text-slate-400">No accepted clips yet. Upload a game and accept some clips first.</p>
+          <p className="text-sm text-foreground/55">No accepted clips yet. Upload a game and accept some clips first.</p>
         ) : (
           <div className="space-y-5">
             <div>
-              <Label className="text-xs text-slate-400">Games ({allGamesSelected ? "All" : selectedGames.length} selected)</Label>
+              <Label className="text-xs text-foreground/55">Games ({allGamesSelected ? "All" : selectedGames.length} selected)</Label>
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {playableGames.map((g) => {
                   const on = allGamesSelected || selectedGames.includes(g.id);
                   return (
                     <button key={g.id} type="button" onClick={() => toggleGame(g.id)}
-                      className={`flex items-center gap-2 rounded-xl border p-3 text-left text-sm transition ${on ? "border-orange-500/50 bg-orange-500/10" : "border-white/10 bg-white/[0.03] hover:bg-white/[0.06]"}`}>
-                      <span className={`flex h-4 w-4 items-center justify-center rounded ${on ? "bg-orange-500 text-slate-950" : "border border-white/20"}`}>{on && <Check className="h-3 w-3" />}</span>
+                      className={`flex items-center gap-2 rounded-xl border p-3 text-left text-sm transition ${on ? "border-primary/50 bg-primary/10" : "border-white/10 hover:bg-white/10"}`}>
+                      <span className={`flex h-4 w-4 items-center justify-center rounded ${on ? "bg-primary text-primary-foreground" : "border border-white/20"}`}>{on && <Check className="h-3 w-3" />}</span>
                       <span className="min-w-0">
                         <span className="block truncate font-medium">{g.name}</span>
-                        <span className="text-[11px] text-slate-500">{acceptedClips.filter((c) => c.game_id === g.id).length} clips</span>
+                        <span className="text-[11px] text-foreground/45">{acceptedClips.filter((c) => c.game_id === g.id).length} clips</span>
                       </span>
                     </button>
                   );
                 })}
               </div>
-              <p className="mt-1 text-[11px] text-slate-500">Leave all unselected to use every game.</p>
+              <p className="mt-1 text-[11px] text-foreground/45">Leave all unselected to use every game.</p>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-3">
               <div>
-                <Label className="text-xs text-slate-400">Reel length</Label>
+                <Label className="text-xs text-foreground/55">Reel length</Label>
                 <Select value={length} onValueChange={setLength}>
-                  <SelectTrigger className="mt-1 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1 "><SelectValue /></SelectTrigger>
                   <SelectContent>{LENGTHS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-slate-400">Clip selection</Label>
+                <Label className="text-xs text-foreground/55">Clip selection</Label>
                 <Select value={selection} onValueChange={setSelection}>
-                  <SelectTrigger className="mt-1 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1 "><SelectValue /></SelectTrigger>
                   <SelectContent>{SELECTIONS.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-xs text-slate-400">Style</Label>
+                <Label className="text-xs text-foreground/55">Style</Label>
                 <Select value={style} onValueChange={setStyle}>
-                  <SelectTrigger className="mt-1 border-white/10 bg-white/5"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="mt-1 "><SelectValue /></SelectTrigger>
                   <SelectContent>{STYLES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>
 
             {selection === "manual" && (
-              <div className="max-h-48 space-y-1 overflow-y-auto rounded-xl border border-white/10 p-2">
+              <div className="max-h-48 space-y-1 overflow-y-auto squircle-sm border border-white/10 p-2">
                 {acceptedClips.map((c) => {
                   const g = games.find((x) => x.id === c.game_id);
                   const on = manualClipIds.includes(c.id);
                   return (
                     <button key={c.id} type="button" onClick={() => toggleClip(c.id)}
-                      className={`flex w-full items-center justify-between rounded-lg p-2 text-left text-sm ${on ? "bg-orange-500/15" : "hover:bg-white/5"}`}>
+                      className={`flex w-full items-center justify-between squircle-sm p-2 text-left text-sm ${on ? "bg-primary/15" : "hover:bg-white/10"}`}>
                       <span className="min-w-0 truncate">{c.play_type || c.description || c.category}{g ? ` · ${g.name}` : ""}</span>
-                      {on && <Check className="h-3.5 w-3.5 text-orange-400" />}
+                      {on && <Check className="h-3.5 w-3.5 text-primary" />}
                     </button>
                   );
                 })}
@@ -150,13 +150,13 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
             )}
 
             <div>
-              <Label className="text-xs text-slate-400">Include</Label>
+              <Label className="text-xs text-foreground/55">Include</Label>
               <div className="mt-2 flex flex-wrap gap-2">
                 {INCLUDE_OPTIONS.map((o) => {
                   const on = includes[o.key];
                   return (
                     <button key={o.key} type="button" onClick={() => toggleInclude(o.key)}
-                      className={`rounded-full border px-3 py-1.5 text-xs transition ${on ? "border-orange-500/50 bg-orange-500/15 text-orange-200" : "border-white/10 text-slate-400 hover:bg-white/5"}`}>
+                      className={`rounded-full border px-3 py-1.5 text-xs transition ${on ? "border-primary/50 bg-primary/15 text-primary" : "border-white/10 text-foreground/55 hover:bg-white/10"}`}>
                       {on && <Check className="mr-1 inline h-3 w-3" />}{o.label}
                     </button>
                   );
@@ -164,7 +164,7 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
               </div>
             </div>
 
-            <Button onClick={generate} disabled={busy} className="w-full bg-orange-500 font-semibold tracking-[0.18em] text-slate-950 hover:bg-orange-400">
+            <Button onClick={generate} disabled={busy} className="w-full">
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
               {busy ? "GENERATING…" : "GENERATE REEL"}
             </Button>

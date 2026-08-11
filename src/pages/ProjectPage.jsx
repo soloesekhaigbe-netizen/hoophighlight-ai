@@ -46,14 +46,14 @@ export default function ProjectPage() {
 
   const { project, games, sources, clips, tapes, coaches, inquiries, events } = state;
   if (loading) return (
-    <div className="flex min-h-[70vh] items-center justify-center bg-ink">
-      <Loader2 className="h-8 w-8 animate-spin text-sun" />
+    <div className="flex min-h-[70vh] items-center justify-center">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
     </div>
   );
   if (!project) return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-paper">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center text-foreground">
       <p className="font-display text-3xl uppercase">Not found</p>
-      <Link to="/dashboard" className="label-sm text-sun">Back to dashboard</Link>
+      <Link to="/dashboard" className="label-sm text-primary">Back to dashboard</Link>
     </div>
   );
 
@@ -65,26 +65,26 @@ export default function ProjectPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-ink text-paper">
+    <div className="min-h-screen text-foreground">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
-        <Link to="/dashboard" className="label-xs inline-flex items-center gap-2 text-paper/50 transition hover:text-sun">
+        <Link to="/dashboard" className="label-xs inline-flex items-center gap-2 text-foreground/50 transition hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>
 
         {/* Editorial studio hero */}
-        <div className="relative mt-6 overflow-hidden rounded-none border border-white/10 bg-ink-soft p-6 sm:p-10">
+        <div className="relative mt-6 overflow-hidden glass-strong squircle-lg p-6 sm:p-10">
           <div className="pointer-events-none absolute -right-4 -top-10 select-none font-display text-[10rem] leading-none text-white/[0.06] sm:text-[16rem]">
             {project.jersey_number || "00"}
           </div>
           <div className="relative flex flex-wrap items-end justify-between gap-6">
             <div>
-              <p className="label-xs text-sun">
+              <p className="label-xs text-primary">
                 {[project.team_name, project.season].filter(Boolean).join("  ·  ") || "Player project"}
               </p>
               <h1 className="mt-3 font-display text-5xl uppercase leading-[0.9] tracking-tight sm:text-7xl">
                 {project.player_name}
               </h1>
-              <p className="mt-4 label-sm text-paper/60">
+              <p className="mt-4 label-sm text-foreground/60">
                 {project.position}{project.height ? `  ·  ${project.height}` : ""}{project.team_name ? `  ·  ${project.team_name}` : ""}
               </p>
             </div>
@@ -93,10 +93,9 @@ export default function ProjectPage() {
         </div>
 
         <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })} className="mt-8">
-          <TabsList className="flex w-full gap-1 overflow-x-auto rounded-none border-b border-white/10 bg-transparent p-0 no-scrollbar">
+          <TabsList className="flex w-full gap-1 overflow-x-auto no-scrollbar">
             {tabList.map(([v, l]) => (
-              <TabsTrigger key={v} value={v}
-                className="shrink-0 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper/55 transition data-[state=active]:border-sun data-[state=active]:bg-transparent data-[state=active]:text-sun data-[state=active]:shadow-none hover:text-paper">
+              <TabsTrigger key={v} value={v} className="shrink-0 whitespace-nowrap text-xs uppercase tracking-[0.14em]">
                 {l}
               </TabsTrigger>
             ))}

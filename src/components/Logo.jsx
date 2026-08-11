@@ -1,14 +1,13 @@
-// PROSPECT — typographic wordmark + monogram. No generic ball icon.
-
+// PROSPECT — glass monogram + wordmark.
 export function Monogram({ className = "h-9 w-9", tone = "sun" }) {
   const tones = {
-    sun: "bg-sun text-ink",
-    ink: "bg-ink text-sun",
-    paper: "bg-paper text-ink",
-    flame: "bg-flame text-paper",
+    sun: "text-primary",
+    ink: "text-foreground",
+    paper: "text-ink",
+    flame: "text-primary",
   };
   return (
-    <span className={`inline-flex items-center justify-center font-display text-xl leading-none ${tones[tone]} ${className}`}>
+    <span className={`inline-flex items-center justify-center font-display text-xl leading-none glass squircle-sm ${tones[tone]} ${className}`}>
       P
     </span>
   );

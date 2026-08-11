@@ -34,7 +34,7 @@ export default function SharePortfolioButton({ project, variant = "outline", lab
   };
 
   return (
-    <Button onClick={share} variant={variant} className={`rounded-none ${toneCls}`}>
+    <Button onClick={share} variant={variant}>
       {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
       {copied ? "Copied" : label}
     </Button>

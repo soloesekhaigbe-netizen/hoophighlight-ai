@@ -90,19 +90,19 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
     <div className="space-y-10">
       {/* Highlight Reel — primary feature */}
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 to-transparent p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 glass-tint squircle-lg p-6">
           <div>
             <p className="font-heading text-lg font-semibold">Highlight Reel</p>
-            <p className="text-sm text-slate-400">Pick one or more games — ranks, sequences and builds a professional reel from your best clips.</p>
+            <p className="text-sm text-foreground/55">Pick one or more games — ranks, sequences and builds a professional reel from your best clips.</p>
           </div>
           <CreateReelDialog project={project} games={games} clips={clips} reload={reload} />
         </div>
 
         {reels.length === 0 ? (
-          <div className="mt-5 rounded-3xl border border-dashed border-white/10 p-12 text-center">
-            <Play className="mx-auto h-10 w-10 text-slate-500" />
+          <div className="mt-5 glass squircle-lg border-dashed border-white/15 p-12 text-center">
+            <Play className="mx-auto h-10 w-10 text-foreground/45" />
             <p className="mt-4 font-heading text-lg">No reels yet</p>
-            <p className="mt-1 text-sm text-slate-400">Create your first highlight reel — select games and we'll build it from your best clips.</p>
+            <p className="mt-1 text-sm text-foreground/55">Create your first highlight reel — select games and we'll build it from your best clips.</p>
           </div>
         ) : (
           <div className="mt-5 space-y-3">
@@ -112,7 +112,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
               const gamesCount = new Set(reelClips.map((c) => c.game_id).filter(Boolean)).size;
               const created = t.created_date ? new Date(t.created_date).toLocaleDateString() : "—";
               return (
-                <div key={t.id} className="rounded-3xl border border-white/5 bg-white/[0.03] p-5">
+                <div key={t.id} className="glass squircle-lg p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       {editingLabel === t.id ? (
@@ -124,35 +124,35 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                       ) : (
                         <button className="group flex items-center gap-2" onClick={() => { setEditingLabel(t.id); setLabelVal(t.version_label || ""); }}>
                           <p className="font-heading text-lg font-semibold">{t.version_label || t.title}</p>
-                          <Pencil className="h-3.5 w-3.5 text-slate-500 opacity-0 transition group-hover:opacity-100" />
+                          <Pencil className="h-3.5 w-3.5 text-foreground/45 opacity-0 transition group-hover:opacity-100" />
                         </button>
                       )}
-                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-foreground/45">
                         <span><Play className="mr-1 inline h-3 w-3" />{t.clip_count} clips · {fmtTime(t.duration_seconds)}</span>
                         <span><Calendar className="mr-1 inline h-3 w-3" />{created}</span>
                         <span><Clock className="mr-1 inline h-3 w-3" />{t.reel_length || "—"} · {t.style || "—"}</span>
                         <span>{gamesCount} game{gamesCount !== 1 ? "s" : ""}</span>
-                        {avgScore > 0 && <span className="text-orange-400">★ avg {avgScore}</span>}
+                        {avgScore > 0 && <span className="text-primary">★ avg {avgScore}</span>}
                         {t.is_featured
                           ? <span className="text-sage">Featured on portfolio</span>
-                          : <span className="text-slate-600">Not featured</span>}
+                          : <span className="text-foreground/30">Not featured</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className={t.is_featured ? "text-orange-400" : "text-slate-500 hover:text-orange-400"} onClick={() => toggleFeature(t)} title="Feature on portfolio">
-                        <Star className={`h-4 w-4 ${t.is_featured ? "fill-orange-400" : ""}`} />
+                      <Button size="sm" variant="ghost" className={t.is_featured ? "text-primary" : "text-foreground/45 hover:text-primary"} onClick={() => toggleFeature(t)} title="Feature on portfolio">
+                        <Star className={`h-4 w-4 ${t.is_featured ? "fill-primary" : ""}`} />
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-slate-500 hover:text-white" onClick={() => setEditing(t)} title="Edit reel"><Pencil className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-slate-500 hover:text-white" onClick={() => duplicate(t)} title="Duplicate"><Copy className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-slate-500 hover:text-white" onClick={() => regenerate(t)} title="Regenerate (new version)"><RotateCw className="h-4 w-4" /></Button>
-                      <Button size="sm" variant="ghost" className="text-slate-500 hover:text-rose-400" onClick={() => removeReel(t)} title="Delete"><Trash2 className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-foreground/45 hover:text-white" onClick={() => setEditing(t)} title="Edit reel"><Pencil className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-foreground/45 hover:text-white" onClick={() => duplicate(t)} title="Duplicate"><Copy className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-foreground/45 hover:text-white" onClick={() => regenerate(t)} title="Regenerate (new version)"><RotateCw className="h-4 w-4" /></Button>
+                      <Button size="sm" variant="ghost" className="text-foreground/45 hover:text-rose-400" onClick={() => removeReel(t)} title="Delete"><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button size="sm" disabled={!t.clip_count} onClick={() => setReel(t)} className="bg-orange-500 text-slate-950 hover:bg-orange-400">
+                    <Button size="sm" disabled={!t.clip_count} onClick={() => setReel(t)} className="">
                       <Play className="mr-1.5 h-3.5 w-3.5" /> Play reel
                     </Button>
-                    <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => setEditing(t)}>
+                    <Button size="sm" variant="outline" className="" onClick={() => setEditing(t)}>
                       <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
                     </Button>
                     {t.video_url && t.export_mode === "rendered" ? (
@@ -160,7 +160,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                         <Button size="sm" className="bg-white/10 hover:bg-white/20"><Download className="mr-1.5 h-3.5 w-3.5" /> Download</Button>
                       </a>
                     ) : (
-                      <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => setRendering(t)}>
+                      <Button size="sm" variant="outline" className="" onClick={() => setRendering(t)}>
                         <Download className="mr-1.5 h-3.5 w-3.5" /> Render video
                       </Button>
                     )}
@@ -175,12 +175,12 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
 
       {/* Per-category tapes — secondary */}
       <div>
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/5 bg-white/[0.02] p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 glass squircle-lg p-6">
           <div>
             <p className="font-heading text-base font-semibold">Category tapes</p>
-            <p className="text-sm text-slate-400">One tape per category, combining every accepted clip.</p>
+            <p className="text-sm text-foreground/55">One tape per category, combining every accepted clip.</p>
           </div>
-          <Button onClick={create} disabled={busy} variant="outline" className="border-white/15 bg-transparent">
+          <Button onClick={create} disabled={busy} variant="outline" className="">
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} REBUILD CATEGORY TAPES
           </Button>
         </div>
@@ -191,16 +191,16 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
             const tape = catTapes.find((t) => t.category === c.key);
             const duration = list.reduce((s, x) => s + Math.max(1, (x.end_seconds || 0) - (x.start_seconds || 0)), 0);
             return (
-              <div key={c.key} className={`rounded-3xl border border-white/5 bg-white/[0.03] p-7 ring-1 ring-inset ${c.ring}`}>
+              <div key={c.key} className={`glass squircle-lg p-7 ring-1 ring-inset ${c.ring}`}>
                 <p className="text-4xl">{c.emoji}</p>
                 <p className={`mt-4 font-heading text-2xl font-semibold tracking-[0.1em] ${c.accent}`}>{c.label}</p>
-                <p className="mt-1 text-sm text-slate-400">{project.player_name} — {c.label}</p>
+                <p className="mt-1 text-sm text-foreground/55">{project.player_name} — {c.label}</p>
                 <div className="mt-5 flex gap-6 text-sm">
-                  <div><p className="text-2xl font-semibold">{list.length}</p><p className="text-[10px] tracking-[0.2em] text-slate-500">CLIPS</p></div>
-                  <div><p className="text-2xl font-semibold">{fmtTime(duration)}</p><p className="text-[10px] tracking-[0.2em] text-slate-500">RUNTIME</p></div>
+                  <div><p className="text-2xl font-semibold">{list.length}</p><p className="text-[10px] tracking-[0.2em] text-foreground/45">CLIPS</p></div>
+                  <div><p className="text-2xl font-semibold">{fmtTime(duration)}</p><p className="text-[10px] tracking-[0.2em] text-foreground/45">RUNTIME</p></div>
                 </div>
                 {tape?.error_message && (
-                  <p className="mt-4 flex gap-2 rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-200">
+                  <p className="mt-4 flex gap-2 squircle-sm border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-200">
                     <AlertTriangle className="h-4 w-4 shrink-0" />{tape.error_message}
                   </p>
                 )}
@@ -208,7 +208,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                   <Button disabled={!list.length} onClick={() => setPreview(c.key)} className="bg-white/10 hover:bg-white/20">
                     <Play className="mr-2 h-4 w-4" /> Preview tape
                   </Button>
-                  <span className="self-center text-[11px] text-slate-500">Playable reel in-app</span>
+                  <span className="self-center text-[11px] text-foreground/45">Playable reel in-app</span>
                 </div>
               </div>
             );

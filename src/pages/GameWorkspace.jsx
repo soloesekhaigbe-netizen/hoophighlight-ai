@@ -10,6 +10,8 @@ import ClipPlayer from "@/components/ClipPlayer";
 import ClipCard from "@/components/project/ClipCard";
 import CreateReelDialog from "@/components/project/CreateReelDialog";
 import StatusBadge from "@/components/StatusBadge";
+import GlassCard from "@/components/glass/GlassCard";
+import GlassAIPanel from "@/components/glass/GlassAIPanel";
 import { fmtTime, ACTIVE_STATUSES } from "@/lib/categories";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -68,7 +70,6 @@ export default function GameWorkspace() {
       if (sourceIds.length) await base44.entities.VideoSource.deleteMany({ game_id: gameId });
       await base44.entities.Game.delete(gameId);
 
-      // Clean dangling reel references.
       const tapes = await base44.entities.HighlightTape.filter({ project_id: id });
       for (const tape of tapes) {
         const ids = tape.clip_ids || [];
@@ -97,12 +98,12 @@ export default function GameWorkspace() {
     } finally { setReplacing(false); }
   };
 
-  if (loading) return <div className="flex min-h-[70vh] items-center justify-center bg-ink"><Loader2 className="h-8 w-8 animate-spin text-sun" /></div>;
+  if (loading) return <div className="flex min-h-[70vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   const { game, sources, clips, project } = state;
   if (!game) return (
-    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-paper">
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center text-foreground">
       <p className="font-display text-3xl uppercase">Game not found</p>
-      <Link to={`/project/${id}?tab=games`} className="label-sm text-sun">Back to games</Link>
+      <Link to={`/project/${id}?tab=games`} className="label-sm text-primary">Back to games</Link>
     </div>
   );
 
@@ -112,64 +113,63 @@ export default function GameWorkspace() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <Link to={`/project/${id}?tab=games`} className="label-xs inline-flex items-center gap-2 text-paper/50 hover:text-sun">
+      <Link to={`/project/${id}?tab=games`} className="label-xs inline-flex items-center gap-2 text-foreground/50 hover:text-primary">
         <ArrowLeft className="h-4 w-4" /> Games
       </Link>
 
-      {/* Game header */}
       <div className="mt-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="font-display text-4xl uppercase leading-[0.9] sm:text-6xl">{game.name}</h1>
-          <p className="mt-3 text-sm text-paper/55">
+          <p className="mt-3 text-sm text-foreground/55">
             {[game.opponent && `vs ${game.opponent}`, game.game_date, game.competition, game.venue].filter(Boolean).join(" · ") || "No details"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" className="border-white/15 bg-transparent hover:bg-white/10" onClick={() => setEditing(true)}>
+          <Button variant="outline" onClick={() => setEditing(true)}>
             <Pencil className="mr-2 h-4 w-4" /> Edit
           </Button>
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" className="border-white/15 bg-transparent hover:bg-white/10" disabled={replacing}>
+              <Button variant="outline" disabled={replacing}>
                 {replacing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />} Replace
               </Button>
             </DialogTrigger>
-            <DialogContent className="border-white/10 bg-slate-950 text-slate-100">
+            <DialogContent className="sm:max-w-lg">
               <DialogHeader><DialogTitle>Upload replacement footage</DialogTitle></DialogHeader>
-              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 p-8 hover:border-orange-500/50">
-                <Upload className="h-6 w-6 text-slate-400" />
-                <span className="text-sm text-slate-300">Choose a video file</span>
+              <label className="flex cursor-pointer flex-col items-center justify-center gap-2 squircle border border-dashed border-white/15 p-8 hover:border-primary/50">
+                <Upload className="h-6 w-6 text-foreground/55" />
+                <span className="text-sm text-foreground/70">Choose a video file</span>
                 <input type="file" accept="video/*" className="hidden" onChange={(e) => addReplacement(e.target.files?.[0])} />
               </label>
             </DialogContent>
           </Dialog>
           {accepted.length > 0 && (
             <CreateReelDialog project={project} games={[game]} clips={clips} reload={load} presetGameIds={[gameId]}
-              trigger={<Button className="bg-orange-500 text-slate-950 hover:bg-orange-400"><Sparkles className="mr-2 h-4 w-4" /> Reel</Button>} />
+              trigger={<Button><Sparkles className="mr-2 h-4 w-4" /> Reel</Button>} />
           )}
-          <Button variant="ghost" className="text-slate-500 hover:text-rose-400" disabled={deleting} onClick={removeGame}>
+          <Button variant="ghost" className="text-foreground/45 hover:text-rose-300" disabled={deleting} onClick={removeGame}>
             {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </Button>
         </div>
       </div>
 
       {/* Statistics strip */}
-      <div className="mt-6 grid grid-cols-3 gap-px overflow-hidden rounded-2xl bg-white/10">
+      <div className="mt-6 grid grid-cols-3 gap-3">
         {[
           ["CLIPS", clips.length],
           ["RECORDINGS", sources.length],
           ["HIGHLIGHTS", fmtTime(highlightDur)],
         ].map(([l, v]) => (
-          <div key={l} className="bg-ink-soft px-4 py-4 text-center">
+          <GlassCard key={l} className="px-4 py-4 text-center">
             <p className="font-display text-3xl leading-none">{v}</p>
-            <p className="label-xs mt-1.5 text-paper/45">{l}</p>
-          </div>
+            <p className="label-xs mt-1.5 text-foreground/45">{l}</p>
+          </GlassCard>
         ))}
       </div>
 
       {/* Full game player */}
       <div className="mt-8">
-        <h2 className="label-xs mb-3 text-paper/50">Full game</h2>
+        <h2 className="label-xs mb-3 text-foreground/50">Full game</h2>
         {fullSource ? (
           fullSource.source_type === "file" && fullSource.file_url ? (
             <ClipPlayer clip={{ clip_url: fullSource.file_url, start_seconds: 0, end_seconds: 0, processing_status: "ready" }} source={{ source_type: "file" }} />
@@ -177,7 +177,7 @@ export default function GameWorkspace() {
             <ClipPlayer clip={{ clip_url: "", start_seconds: 0, end_seconds: 0, processing_status: "ready" }} source={fullSource} />
           )
         ) : (
-          <div className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-white/10 text-paper/40">
+          <div className="flex aspect-video items-center justify-center squircle border border-dashed border-white/15 text-foreground/40">
             <Film className="h-8 w-8" />
           </div>
         )}
@@ -185,16 +185,17 @@ export default function GameWorkspace() {
 
       {/* Processing */}
       {sources.some((s) => ACTIVE_STATUSES.includes(s.status)) && (
-        <div className="mt-6 rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] p-4">
-          <p className="label-xs text-orange-300">Processing</p>
-          <div className="mt-3 space-y-2">
-            {sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).map((s) => (
-              <div key={s.id} className="flex items-center justify-between gap-3">
-                <StatusBadge status={s.status} />
-                <span className="text-xs text-paper/50">{s.title} · {s.progress || 0}%</span>
-              </div>
-            ))}
-          </div>
+        <div className="mt-6">
+          <GlassAIPanel title="Processing" icon={Sparkles}>
+            <div className="space-y-2">
+              {sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-3">
+                  <StatusBadge status={s.status} />
+                  <span className="text-xs text-foreground/55">{s.title} · {s.progress || 0}%</span>
+                </div>
+              ))}
+            </div>
+          </GlassAIPanel>
         </div>
       )}
 
@@ -202,12 +203,12 @@ export default function GameWorkspace() {
       <div className="mt-10">
         <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
           <h2 className="font-display text-2xl uppercase">Clips</h2>
-          <span className="label-xs text-paper/40">{clips.length}</span>
+          <span className="label-xs text-foreground/40">{clips.length}</span>
         </div>
         {clips.length === 0 ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-10 text-center text-sm text-paper/40">
+          <GlassCard className="mt-4 border border-dashed border-white/15 p-10 text-center text-sm text-foreground/40">
             No clips for this game yet. {sources.some((s) => ACTIVE_STATUSES.includes(s.status)) ? "Analysis is running." : "Add clips manually from the Clips tab."}
-          </div>
+          </GlassCard>
         ) : (
           <div className="mt-5 space-y-4">
             {clips.map((c) => (
@@ -219,35 +220,35 @@ export default function GameWorkspace() {
 
       {/* Edit dialog */}
       <Dialog open={editing} onOpenChange={setEditing}>
-        <DialogContent className="border-white/10 bg-slate-950 text-slate-100 sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader><DialogTitle>Edit game</DialogTitle></DialogHeader>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <Label className="text-xs text-slate-400">Game name</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Game name</Label>
+              <Input className="mt-1" value={form.name || ""} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </div>
             <div>
-              <Label className="text-xs text-slate-400">Opponent</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" value={form.opponent || ""} onChange={(e) => setForm({ ...form, opponent: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Opponent</Label>
+              <Input className="mt-1" value={form.opponent || ""} onChange={(e) => setForm({ ...form, opponent: e.target.value })} />
             </div>
             <div>
-              <Label className="text-xs text-slate-400">Date</Label>
-              <Input type="date" className="mt-1 border-white/10 bg-white/5" value={form.game_date || ""} onChange={(e) => setForm({ ...form, game_date: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Date</Label>
+              <Input type="date" className="mt-1" value={form.game_date || ""} onChange={(e) => setForm({ ...form, game_date: e.target.value })} />
             </div>
             <div>
-              <Label className="text-xs text-slate-400">Competition</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" value={form.competition || ""} onChange={(e) => setForm({ ...form, competition: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Competition</Label>
+              <Input className="mt-1" value={form.competition || ""} onChange={(e) => setForm({ ...form, competition: e.target.value })} />
             </div>
             <div>
-              <Label className="text-xs text-slate-400">Venue</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" value={form.venue || ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Venue</Label>
+              <Input className="mt-1" value={form.venue || ""} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
             </div>
             <div className="sm:col-span-2">
-              <Label className="text-xs text-slate-400">Team</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" value={form.team || ""} onChange={(e) => setForm({ ...form, team: e.target.value })} />
+              <Label className="text-xs text-foreground/55">Team</Label>
+              <Input className="mt-1" value={form.team || ""} onChange={(e) => setForm({ ...form, team: e.target.value })} />
             </div>
           </div>
-          <Button onClick={saveGame} disabled={saving} className="bg-orange-500 text-slate-950 hover:bg-orange-400">
+          <Button onClick={saveGame} disabled={saving}>
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Save
           </Button>
         </DialogContent>

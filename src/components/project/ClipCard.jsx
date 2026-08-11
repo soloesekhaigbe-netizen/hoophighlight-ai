@@ -56,7 +56,7 @@ export default function ClipCard({ clip, source, game, project, reload, onMove, 
   };
 
   return (
-    <div className={`rounded-3xl border bg-white/[0.03] p-5 ${statusRing}`}>
+    <div className={`glass squircle-lg p-5 ${statusRing}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className={`rounded-full px-3 py-1 text-[10px] font-semibold tracking-[0.18em] ${meta.bg} ${meta.accent}`}>
           {meta.emoji} {meta.label}
@@ -94,7 +94,7 @@ export default function ClipCard({ clip, source, game, project, reload, onMove, 
       </div>
 
       {showConfirm && (
-        <div className="mt-4 rounded-2xl border border-orange-500/25 bg-orange-500/[0.07] p-4">
+        <div className="mt-4 glass-tint squircle p-4">
           <p className="text-xs font-medium text-orange-200">Is this your player?</p>
           <p className="mt-1 text-[11px] text-slate-400">Confirm the identity to lock the player track for this game.</p>
           <div className="mt-3 flex flex-wrap gap-2">

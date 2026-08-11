@@ -12,7 +12,7 @@ module.exports = {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
-  			ink: { DEFAULT: '#111111', soft: '#1c1c1c' },
+  			ink: { DEFAULT: '#0a0c12', soft: '#10131b' },
   			paper: { DEFAULT: '#F4F0E8', deep: '#E9E3D6' },
   			sun: { DEFAULT: '#FFB020', deep: '#E89500' },
   			flame: { DEFAULT: '#FF5A1F', deep: '#E8470F' },
@@ -72,6 +72,11 @@ module.exports = {
   			body: ['var(--font-body)'],
   			display: ['var(--font-display)'],
   			mono: ['var(--font-mono)']
+  		},
+  		boxShadow: {
+  			'glass': '0 8px 40px -14px rgba(0,0,0,0.6)',
+  			'glass-lg': '0 16px 60px -16px rgba(0,0,0,0.7)',
+  			'glow': '0 0 40px -8px rgba(255,106,46,0.5)'
   		},
   		keyframes: {
   			'accordion-down': {

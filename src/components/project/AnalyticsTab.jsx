@@ -28,28 +28,28 @@ export default function AnalyticsTab({ events = [] }) {
     <div className="space-y-6">
       <div>
         <p className="font-heading text-xl font-semibold">Recruiting analytics</p>
-        <p className="mt-1 text-sm text-slate-400">How coaches are engaging with your portfolio.</p>
+        <p className="mt-1 text-sm text-foreground/55">How coaches are engaging with your portfolio.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map(([label, value, Icon, cls]) => (
-          <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
+          <div key={label} className="glass squircle p-5">
             <Icon className={`h-5 w-5 ${cls}`} />
             <p className="mt-4 text-3xl font-semibold">{value}</p>
-            <p className="mt-1 text-[11px] tracking-[0.2em] text-slate-500">{label.toUpperCase()}</p>
+            <p className="mt-1 text-[11px] tracking-[0.2em] text-foreground/45">{label.toUpperCase()}</p>
           </div>
         ))}
       </div>
 
-      <div className="rounded-2xl border border-white/5 bg-white/[0.03] p-6">
-        <p className="text-[11px] tracking-[0.24em] text-slate-500">HIGHLIGHT PLAYS BY CATEGORY</p>
+      <div className="glass squircle p-6">
+        <p className="text-[11px] tracking-[0.24em] text-foreground/45">HIGHLIGHT PLAYS BY CATEGORY</p>
         <div className="mt-4 space-y-3">
           {CATEGORIES.map((c) => {
             const n = byCategory[c.key] || 0;
             const max = Math.max(1, ...Object.values(byCategory));
             return (
               <div key={c.key} className="flex items-center gap-3">
-                <span className="w-24 text-xs text-slate-400">{c.emoji} {c.label}</span>
+                <span className="w-24 text-xs text-foreground/55">{c.emoji} {c.label}</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/5">
                   <div className={`h-full rounded-full ${BAR_BG[c.key]}`} style={{ width: `${(n / max) * 100}%` }} />
                 </div>

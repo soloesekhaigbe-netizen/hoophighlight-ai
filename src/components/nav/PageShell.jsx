@@ -1,12 +1,14 @@
 import SiteNav from "@/components/nav/SiteNav";
+import AmbientBackground from "@/components/glass/AmbientBackground";
 
-// Shared page shell: renders the site nav and pads content so it clears the
-// vertical rail (md+) and the mobile top bar (<md).
+// Shared page shell: ambient glass background + floating nav + content padding
+// that clears the floating dock (md+) and the mobile top bar (<md).
 export default function PageShell({ items, brandTo = "/", footer, actions, children, className = "" }) {
   return (
-    <div className="min-h-screen bg-background font-body text-foreground">
+    <div className="relative min-h-screen font-body text-foreground">
+      <AmbientBackground />
       <SiteNav items={items} brandTo={brandTo} footer={footer} actions={actions} />
-      <main className={`pt-16 md:pt-0 md:pl-[76px] ${className}`}>
+      <main className={`pt-20 md:pt-6 md:pl-[92px] ${className}`}>
         {children}
       </main>
     </div>

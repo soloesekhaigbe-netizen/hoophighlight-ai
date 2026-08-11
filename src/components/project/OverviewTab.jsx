@@ -59,7 +59,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-6">
-        <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] p-5">
+        <div className="glass-tint squircle p-5">
           <div className="flex items-center justify-between">
             <p className="text-sm font-medium">Profile completion — {profileCompletion(project)}%</p>
             <p className="text-xs text-slate-400">{completionMissing(project).length} field(s) missing</p>
@@ -72,7 +72,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
           {[["GAMES", games.length], ["VIDEOS", sources.length],
             ["PROCESSING", sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).length],
             ["CLIPS", clips.length]].map(([l, v]) => (
-            <div key={l} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
+            <div key={l} className="glass squircle p-5">
               <p className="text-3xl font-semibold">{v}</p>
               <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-500">{l}</p>
             </div>
@@ -81,7 +81,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
 
         <div className="grid gap-4 sm:grid-cols-4">
           {CATEGORIES.map((c) => (
-            <div key={c.key} className={`rounded-2xl border border-white/5 p-5 ${c.bg}`}>
+            <div key={c.key} className={`glass squircle p-5 ${c.bg}`}>
               <p className="text-2xl">{c.emoji}</p>
               <p className={`mt-3 text-2xl font-semibold ${c.accent}`}>{clips.filter((x) => x.category === c.key).length}</p>
               <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-400">{c.label}</p>
@@ -89,7 +89,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
           ))}
         </div>
 
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
+        <div className="glass squircle-lg p-6">
           <p className="text-[11px] tracking-[0.24em] text-slate-500">TAPE BRANDING</p>
           <div className="mt-4 space-y-4">
             {[["intro_enabled", "Intro screen"], ["outro_enabled", "Outro screen"]].map(([k, label]) => (
@@ -108,7 +108,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
       </div>
 
       <div className="space-y-6">
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
+        <div className="glass squircle-lg p-6">
           <div className="flex items-center justify-between">
             <p className="text-[11px] tracking-[0.24em] text-slate-500">PLAYER IDENTIFICATION</p>
             {project.calibrated ? (
@@ -137,7 +137,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
+        <div className="glass squircle-lg p-6">
           <p className="text-[11px] tracking-[0.24em] text-slate-500">REFERENCE PHOTOS</p>
           <div className="mt-4 grid grid-cols-4 gap-3">
             {photos.map((url, i) => (
@@ -158,7 +158,7 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
           </div>
         </div>
 
-        <div className="rounded-3xl border border-white/5 bg-white/[0.03] p-6">
+        <div className="glass squircle-lg p-6">
           <p className="text-[11px] tracking-[0.24em] text-slate-500">AUTO-ACCEPT THRESHOLD</p>
           <div className="mt-4 flex items-center gap-4">
             <Slider value={[threshold]} min={50} max={99} step={1} onValueChange={(v) => patch({ identity_threshold: v[0] })}
