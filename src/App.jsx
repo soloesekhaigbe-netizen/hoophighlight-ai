@@ -18,6 +18,8 @@ import ProjectPage from '@/pages/ProjectPage';
 import Portfolio from '@/pages/Portfolio';
 import SystemHealth from '@/pages/SystemHealth';
 import Landing from '@/pages/Landing';
+import GameWorkspace from '@/pages/GameWorkspace';
+import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,6 +57,8 @@ const AuthenticatedApp = () => {
         <Route element={<AppLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/project/:id" element={<ProjectPage />} />
+          <Route path="/project/:id/game/:gameId" element={<GameWorkspace />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/system-health" element={<SystemHealth />} />
         </Route>
       </Route>

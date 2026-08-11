@@ -20,10 +20,16 @@ export default function ReelPlayer({ open, onOpenChange, tape, clips, sources, g
     if (index === -1) { const t = setTimeout(() => setIndex(0), 4000); return () => clearTimeout(t); }
     const clip = tapeClips[index];
     if (!clip) return undefined;
+    // File clips advance on their real onEnded event — don't also fire a timer
+    // (it would skip the next clip). Embed clips (YouTube/Veo) don't emit onEnded,
+    // so they need a duration-based timer to advance.
+    const src = sources.find((s) => s.id === clip.video_source_id);
+    const isLink = src?.source_type === 'youtube' || src?.source_type === 'veo' || !clip.clip_url;
+    if (!isLink) return undefined;
     const dur = Math.max(2, (clip.end_seconds || 0) - (clip.start_seconds || 0)) * 1000 + 800;
     const t = setTimeout(() => setIndex((i) => i + 1), dur);
     return () => clearTimeout(t);
-  }, [index, open, tapeClips]);
+  }, [index, open, tapeClips, sources]);
 
   const clip = index >= 0 ? tapeClips[index] : null;
   const source = clip ? sources.find((s) => s.id === clip.video_source_id) : null;

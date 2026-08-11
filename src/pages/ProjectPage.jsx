@@ -23,13 +23,13 @@ export default function ProjectPage() {
   const load = useCallback(async () => {
     const [project, games, sources, clips, tapes, coaches, inquiries, events] = await Promise.all([
       base44.entities.Project.get(id),
-      base44.entities.Game.filter({ project_id: id }),
-      base44.entities.VideoSource.filter({ project_id: id }),
-      base44.entities.Clip.filter({ project_id: id }),
-      base44.entities.HighlightTape.filter({ project_id: id }),
-      base44.entities.Coach.filter({ project_id: id }),
-      base44.entities.CoachInquiry.filter({ project_id: id }),
-      base44.entities.PortfolioEvent.filter({ project_id: id }),
+      base44.entities.Game.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.VideoSource.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.Clip.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.HighlightTape.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.Coach.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.CoachInquiry.filter({ project_id: id }, '-created_date', 500),
+      base44.entities.PortfolioEvent.filter({ project_id: id }, '-created_date', 500),
     ]);
     setState({ project, games, sources, clips, tapes, coaches, inquiries, events });
     setLoading(false);

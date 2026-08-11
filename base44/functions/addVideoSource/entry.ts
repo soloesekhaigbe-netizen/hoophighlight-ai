@@ -32,11 +32,20 @@ export default async function (req) {
     }
 
     const list = Array.isArray(urls) ? urls : [urls];
+    let existingUrls = new Set();
+    try {
+      const existing = await base44.entities.VideoSource.filter({ project_id });
+      existingUrls = new Set(existing.map((s) => (s.url || '').trim()).filter(Boolean));
+    } catch (_e) {}
 
     for (const raw of list) {
       const parsed = parseVideoUrl(raw);
       if (!parsed.ok) {
         rejected.push({ url: raw, error: parsed.error });
+        continue;
+      }
+      if (existingUrls.has((raw || '').trim())) {
+        rejected.push({ url: raw, error: 'This link is already added to this project.' });
         continue;
       }
       const isLink = parsed.source_type === 'youtube' || parsed.source_type === 'veo';

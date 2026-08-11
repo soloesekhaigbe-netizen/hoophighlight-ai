@@ -7,15 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Check, X, Trash2, ArrowUp, ArrowDown, Pencil, UserCheck, UserX, Star } from "lucide-react";
 import ClipPlayer from "@/components/ClipPlayer";
 import { CATEGORIES, catMeta, fmtTime, confidenceLabel, identityVerdict } from "@/lib/categories";
+import { useToast } from "@/components/ui/use-toast";
 
-export default function ClipCard({ clip, source, game, project, reload, onMove }) {
+export default function ClipCard({ clip, source, game, project, reload, onMove, tapes }) {
   const [editing, setEditing] = useState(false);
+  const { toast } = useToast();
   const meta = catMeta(clip.category);
   const playConf = confidenceLabel(clip.play_confidence ?? clip.confidence ?? 0);
   const idConf = clip.identity_confidence ?? 0;
   const threshold = project?.identity_threshold ?? 90;
   const verdict = identityVerdict(idConf, threshold);
   const confirmed = clip.player_confirmed || "unconfirmed";
+  const dur = Math.max(0, (clip.end_seconds || 0) - (clip.start_seconds || 0));
 
   const save = async (data) => { await base44.entities.Clip.update(clip.id, data); };
   const patch = async (data) => { await base44.entities.Clip.update(clip.id, data); reload(); };
@@ -26,14 +29,31 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
     clip.status === "accepted" ? "border-emerald-500/40" :
     clip.status === "rejected" ? "border-rose-500/30 opacity-70" : "border-white/5";
 
-  const confirmYes = async () => {
-    await patch({ player_confirmed: "yes", status: "accepted" });
-  };
+  const confirmYes = async () => { await patch({ player_confirmed: "yes", status: "accepted" }); };
   const confirmNo = async () => {
     await patch({ player_confirmed: "no", status: "rejected", notes: (clip.notes ? clip.notes + "\n" : "") + "Player identity rejected by user — re-detect track." });
   };
 
   const showConfirm = confirmed === "unconfirmed" && clip.status !== "rejected";
+  const mixReels = (tapes || []).filter((t) => t.category === "mix");
+
+  const addToReel = async (tapeId) => {
+    if (!tapeId) return;
+    const tape = mixReels.find((t) => t.id === tapeId);
+    if (!tape) return;
+    if ((tape.clip_ids || []).includes(clip.id)) {
+      toast({ title: "Already in this reel" });
+      return;
+    }
+    const clipIds = [...(tape.clip_ids || []), clip.id];
+    await base44.entities.HighlightTape.update(tapeId, {
+      clip_ids: clipIds,
+      clip_count: clipIds.length,
+      duration_seconds: (tape.duration_seconds || 0) + Math.max(1, dur),
+    });
+    toast({ title: "Added to reel", description: tape.version_label || tape.title });
+    reload?.();
+  };
 
   return (
     <div className={`rounded-3xl border bg-white/[0.03] p-5 ${statusRing}`}>
@@ -41,13 +61,14 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
         <span className={`rounded-full px-3 py-1 text-[10px] font-semibold tracking-[0.18em] ${meta.bg} ${meta.accent}`}>
           {meta.emoji} {meta.label}
         </span>
+        {clip.play_type && <span className="text-[11px] font-semibold text-slate-300">{clip.play_type}</span>}
         <span className={`text-[11px] font-semibold ${verdict.cls}`}>PLAYER {idConf}% · {verdict.text}</span>
         <span className={`text-[11px] font-semibold ${playConf.cls}`}>PLAY {clip.play_confidence ?? clip.confidence ?? 0}% · {playConf.text}</span>
         {clip.detection_source === "ai-vision" && (
           <span className="text-[10px] tracking-[0.16em] text-slate-500">AUTO</span>
         )}
         {(clip.highlight_score || 0) > 0 && (
-          <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300" title="Highlight score">★ {clip.highlight_score}</span>
+          <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300" title="Quality score">★ {clip.highlight_score}</span>
         )}
         <div className="ml-auto flex items-center gap-1">
           <Button size="icon" variant="ghost" className={`h-8 w-8 ${clip.favourite ? "text-orange-400" : "text-slate-400 hover:text-orange-400"}`} onClick={() => patch({ favourite: !clip.favourite })}>
@@ -67,7 +88,7 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
         <div className="min-w-0">
           <p className="text-sm font-medium">{clip.description || clip.play_type || "Detected play"}</p>
           <p className="text-xs text-slate-500">
-            {game?.name || "Unassigned game"}{game?.game_date ? ` · ${game.game_date}` : ""} · {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)}
+            {game?.name || "Unassigned game"}{game?.game_date ? ` · ${game.game_date}` : ""} · {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)} · {fmtTime(dur)} long
           </p>
         </div>
       </div>
@@ -123,18 +144,6 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <p className="text-[11px] tracking-[0.18em] text-slate-500">PLAY CONFIDENCE</p>
-                <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.play_confidence ?? clip.confidence ?? 0)}
-                  onBlur={(e) => save({ play_confidence: Number(e.target.value) })} />
-              </div>
-              <div>
-                <p className="text-[11px] tracking-[0.18em] text-slate-500">IDENTITY CONFIDENCE</p>
-                <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.identity_confidence ?? 0)}
-                  onBlur={(e) => save({ identity_confidence: Number(e.target.value) })} />
-              </div>
-            </div>
           </div>
           <div>
             <p className="text-[11px] tracking-[0.18em] text-slate-500">NOTES</p>
@@ -153,9 +162,14 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
           className={clip.status === "rejected" ? "bg-rose-500 text-slate-950" : "bg-white/10 hover:bg-white/20"}>
           <X className="mr-1.5 h-3.5 w-3.5" /> Reject
         </Button>
-        <Button size="sm" onClick={confirmNo} className="bg-white/10 hover:bg-white/20">
-          <UserX className="mr-1.5 h-3.5 w-3.5" /> Change player
-        </Button>
+        {mixReels.length > 0 && (
+          <Select onValueChange={addToReel}>
+            <SelectTrigger className="h-8 w-36 border-white/10 bg-white/5 text-xs"><SelectValue placeholder="Add to reel" /></SelectTrigger>
+            <SelectContent>
+              {mixReels.map((t) => <SelectItem key={t.id} value={t.id}>{t.version_label || t.title || "Reel"}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <Button size="sm" variant="ghost" className="text-slate-500 hover:text-rose-400" onClick={remove}>
           <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
         </Button>

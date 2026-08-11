@@ -103,6 +103,13 @@ export default async function (req) {
     const isLink = source.source_type !== 'file';
 
     await setStage('creating_clips', 'Creating clip records', 85);
+
+    // Retry-safe: remove any previously auto-detected clips for this source so a
+    // re-analysis never creates duplicates. Manually-added clips are preserved.
+    try {
+      await base44.entities.Clip.deleteMany({ video_source_id: source.id, detection_source: 'ai-vision' });
+    } catch (_e) { /* best-effort */ }
+
     for (const ev of events) {
       const pre = ctx(ev.category).pre;
       const post = ctx(ev.category).post;
@@ -122,6 +129,7 @@ export default async function (req) {
         confidence: Number(ev.confidence || 0),
         play_confidence: Number(ev.confidence || 0),
         identity_confidence: Number(analysis.identity_confidence || 0),
+        highlight_score: Math.min(100, Math.round((Number(ev.confidence || 0) * 100) + (ev.category === 'blocks' ? 8 : ev.category === 'buckets' ? 4 : 0))),
         player_confirmed: 'unconfirmed',
         player_track_id: '',
         status: 'pending',

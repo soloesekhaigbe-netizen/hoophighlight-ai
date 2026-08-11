@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import PageShell from "@/components/nav/PageShell";
-import { LayoutDashboard, User, Film, BarChart3, CalendarDays, Inbox, Share2, LogOut, Activity } from "lucide-react";
+import { LayoutDashboard, User, Film, BarChart3, CalendarDays, Inbox, Share2, LogOut, Activity, Settings as SettingsIcon } from "lucide-react";
 
 export default function Layout() {
   const [items, setItems] = useState([
@@ -30,6 +30,7 @@ export default function Layout() {
           { to: `/project/${projectId}?tab=portfolio`, label: "Portfolio", icon: Share2 },
           { to: `/project/${projectId}?tab=inquiries`, label: "Inquiries", icon: Inbox },
         ] : []),
+        { to: "/settings", label: "Settings", icon: SettingsIcon },
         ...(role === "admin" ? [{ to: "/system-health", label: "System Health", icon: Activity }] : []),
       ];
       setItems(nav);

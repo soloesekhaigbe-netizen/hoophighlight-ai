@@ -1,25 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-  Film, Video, Loader2, Scissors, Mail, Eye, Share2, ArrowRight, CheckCircle2, AlertCircle,
+  Film, Loader2, Scissors, Mail, Eye, ArrowRight, CheckCircle2, AlertCircle,
+  Upload, Camera, Sparkles, Play, ChevronRight, Star,
 } from "lucide-react";
-import { ACTIVE_STATUSES, CATEGORIES } from "@/lib/categories";
-import { profileCompletion, completionMissing, portfolioReady, portfolioLink } from "@/lib/portfolio";
+import { ACTIVE_STATUSES, CATEGORIES, catMeta, fmtTime } from "@/lib/categories";
+import { profileCompletion, completionMissing, portfolioReady } from "@/lib/portfolio";
 import SharePortfolioButton from "@/components/SharePortfolioButton";
-
-const CARD_TONES = ["bg-paper", "bg-sun", "bg-rose", "bg-sage", "bg-paper", "bg-flame text-paper"];
+import AddGameDialog from "@/components/project/AddGameDialog";
+import CreateReelDialog from "@/components/project/CreateReelDialog";
+import StatusBadge from "@/components/StatusBadge";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
-  const [data, setData] = useState({ project: null, games: [], sources: [], clips: [], tapes: [], inquiries: [], coaches: [], events: [] });
+  const [recordBusy, setRecordBusy] = useState(false);
+  const [data, setData] = useState({ project: null, games: [], sources: [], clips: [], tapes: [], inquiries: [], events: [] });
+  const recordRef = useRef(null);
 
   const load = async () => {
-    const projects = await base44.entities.Project.list("-created_date");
+    const projects = await base44.entities.Project.list("-created_date", 50);
     let project = projects[0] || null;
     if (!project) {
       setCreating(true);
@@ -29,8 +33,7 @@ export default function Dashboard() {
         const base = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 26) || "player";
         const slug = `${base}-${Math.random().toString(36).slice(2, 6)}`;
         project = await base44.entities.Project.create({
-          owner_user_id: me?.id || "",
-          player_name: name, jersey_number: "0", team_name: "Unassigned", position: "Unassigned",
+          owner_user_id: me?.id || "", player_name: name, jersey_number: "0", team_name: "Unassigned", position: "Unassigned",
           email: me?.email || "", slug, is_public: true, show_email: false,
           identity_threshold: 90, intro_enabled: true, outro_enabled: true, calibrated: false,
         });
@@ -39,28 +42,65 @@ export default function Dashboard() {
             to: me?.email, subject: "Welcome to PROSPECT",
             body: `Hi ${name},\n\nYour PROSPECT portfolio has been created. Complete your profile, upload a game, and we'll detect your buckets, rebounds, blocks and shooting — then build your highlight tapes automatically.\n\nOpen your dashboard to get started.`,
           });
-        } catch (_e) { /* email is best-effort */ }
+        } catch (_e) {}
       } catch (_e) { project = null; }
       setCreating(false);
     }
     if (!project) { setLoading(false); return; }
     const pid = project.id;
-    const [games, sources, clips, tapes, inquiries, coaches, events] = await Promise.all([
-      base44.entities.Game.filter({ project_id: pid }),
-      base44.entities.VideoSource.filter({ project_id: pid }),
-      base44.entities.Clip.filter({ project_id: pid }),
-      base44.entities.HighlightTape.filter({ project_id: pid }),
-      base44.entities.CoachInquiry.filter({ project_id: pid }),
-      base44.entities.Coach.filter({ project_id: pid }),
-      base44.entities.PortfolioEvent.filter({ project_id: pid }),
+    const [games, sources, clips, tapes, inquiries, events] = await Promise.all([
+      base44.entities.Game.filter({ project_id: pid }, "-created_date", 500),
+      base44.entities.VideoSource.filter({ project_id: pid }, "-created_date", 500),
+      base44.entities.Clip.filter({ project_id: pid }, "-created_date", 500),
+      base44.entities.HighlightTape.filter({ project_id: pid }, "-created_date", 500),
+      base44.entities.CoachInquiry.filter({ project_id: pid }, "-created_date", 500),
+      base44.entities.PortfolioEvent.filter({ project_id: pid }, "-created_date", 500),
     ]);
-    setData({ project, games, sources, clips, tapes, inquiries, coaches, events });
+    setData({ project, games, sources, clips, tapes, inquiries, events });
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    const active = data.sources.some((s) => ACTIVE_STATUSES.includes(s.status));
+    if (!active) return undefined;
+    const t = setInterval(load, 5000);
+    return () => clearInterval(t);
+  }, [data.sources]);
 
-  const { project, games, sources, clips, tapes, inquiries, coaches, events } = data;
+  // Record a game directly from the device camera (mobile) — real capture flow.
+  const onRecord = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRecordBusy(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const game = await base44.entities.Game.create({ project_id: data.project.id, name: `Recorded ${new Date().toLocaleDateString()}` });
+      const res = await base44.functions.invoke("addVideoSource", { project_id: data.project.id, game_id: game.id, file_url, title: file.name });
+      const created = res?.data?.created || res?.created || [];
+      for (const s of created) base44.functions.invoke("analyzeVideoSource", { video_source_id: s.id }).catch(() => {});
+      load();
+    } catch (err) {
+      alert("Could not record: " + (err?.message || "unknown error"));
+    } finally {
+      setRecordBusy(false);
+      if (recordRef.current) recordRef.current.value = "";
+    }
+  };
+
+  const { project, games, sources, clips, tapes, inquiries, events } = data;
+
+  if (loading || creating) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center bg-ink">
+        <Loader2 className="h-8 w-8 animate-spin text-sun" />
+      </div>
+    );
+  }
+  if (!project) {
+    return <div className="py-20 text-center text-paper/50">Could not load your portfolio. Try refreshing.</div>;
+  }
+
   const processing = sources.filter((s) => ACTIVE_STATUSES.includes(s.status));
   const accepted = clips.filter((c) => c.status === "accepted");
   const completion = profileCompletion(project);
@@ -68,127 +108,194 @@ export default function Dashboard() {
   const ready = portfolioReady(project, accepted);
   const views = events.filter((e) => e.event_type === "portfolio_view").length;
   const newInquiries = inquiries.filter((q) => q.status === "new").length;
-
-  if (loading || creating) {
-    return (
-      <div className="flex min-h-[70vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-flame" />
-      </div>
-    );
-  }
-  if (!project) {
-    return <div className="py-20 text-center text-ink/50">Could not load your portfolio. Try refreshing.</div>;
-  }
+  const reels = tapes.filter((t) => t.category === "mix").sort((a, b) => (b.created_date || "").localeCompare(a.created_date || ""));
+  const recentGames = [...games].sort((a, b) => (b.created_date || "").localeCompare(a.created_date || "")).slice(0, 4);
+  const recentClips = [...accepted].sort((a, b) => (b.highlight_score || 0) - (a.highlight_score || 0)).slice(0, 6);
+  const hasAcceptedClips = accepted.length > 0;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   const firstName = (project.player_name || "").split(" ")[0] || "Player";
 
-  const stats = [
-    { label: "Games", value: games.length, icon: Film, tone: 0 },
-    { label: "Processing", value: processing.length, icon: Loader2, tone: 1 },
-    { label: "Accepted clips", value: accepted.length, icon: Scissors, tone: 2 },
-    { label: "Tapes ready", value: tapes.filter((t) => t.status === "ready").length, icon: Film, tone: 3 },
-    { label: "Portfolio views", value: views, icon: Eye, tone: 4 },
-    { label: "New inquiries", value: newInquiries, icon: Mail, tone: 5 },
-  ];
-
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:py-16">
-      {/* Greeting hero */}
+    <div className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
+      {/* Greeting + quick actions */}
       <div className="animate-slide-up">
-        <p className="label-xs text-flame">{greeting},</p>
-        <h1 className="mt-2 display-xl text-5xl leading-[0.85] sm:text-7xl">
-          {firstName}.
-        </h1>
-        <p className="mt-4 max-w-md text-ink/65">
-          {ready ? "Your portfolio is share-ready. Keep it fresh." : "There's work to do — finish your profile and drop your footage."}
+        <p className="label-xs text-sun">{greeting},</p>
+        <h1 className="mt-2 font-display text-5xl uppercase leading-[0.85] sm:text-7xl">{firstName}.</h1>
+        <p className="mt-4 max-w-md text-paper/65">
+          {ready ? "Your portfolio is share-ready. Keep it fresh." : "Upload a game and we'll find your highlights — then build your reel."}
         </p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <Button onClick={() => navigate(`/project/${project.id}`)} className="rounded-none bg-ink text-paper hover:bg-ink-soft">
-            Open project <ArrowRight className="ml-2 h-4 w-4" />
+          <AddGameDialog projectId={project.id} onDone={load}
+            trigger={<Button className="bg-orange-500 font-semibold tracking-[0.16em] text-slate-950 hover:bg-orange-400"><Upload className="mr-2 h-4 w-4" />Upload game</Button>} />
+          <Button onClick={() => recordRef.current?.click()} disabled={recordBusy}
+            className="bg-white/10 font-semibold tracking-[0.16em] text-paper hover:bg-white/20">
+            {recordBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Camera className="mr-2 h-4 w-4" />}
+            {recordBusy ? "Recording…" : "Record game"}
           </Button>
-          <a href={portfolioLink(project)} target="_blank" rel="noreferrer">
-            <Button variant="outline" className="rounded-none border-ink/20 bg-transparent text-ink hover:bg-ink hover:text-paper">
-              <Eye className="mr-2 h-4 w-4" /> View portfolio
-            </Button>
-          </a>
-          <SharePortfolioButton project={project} label="Share" />
+          <input ref={recordRef} type="file" accept="video/*" capture="environment" className="hidden" onChange={onRecord} />
+          <CreateReelDialog project={project} games={games} clips={clips} reload={load}
+            trigger={<Button disabled={!hasAcceptedClips} className="bg-white/10 font-semibold tracking-[0.16em] text-paper hover:bg-white/20 disabled:opacity-40"><Sparkles className="mr-2 h-4 w-4" />Create reel</Button>} />
+          <SharePortfolioButton project={project} label="Share" tone="light" />
         </div>
       </div>
 
-      {/* Profile completion — bold block */}
-      <div className="mt-12 grid gap-5 border-t-2 border-ink/15 pt-8 md:grid-cols-12">
-        <div className="md:col-span-7">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="label-xs text-ink/50">Profile completion</p>
-            {ready ? (
-              <span className="label-xs inline-flex items-center gap-1.5 rounded-full bg-sage px-3 py-1 text-ink">
-                <CheckCircle2 className="h-3.5 w-3.5" /> Ready to share
-              </span>
-            ) : (
-              <span className="label-xs inline-flex items-center gap-1.5 rounded-full bg-flame px-3 py-1 text-paper">
-                <AlertCircle className="h-3.5 w-3.5" /> Complete profile
-              </span>
-            )}
+      {/* Portfolio status */}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-6">
+        <div className="flex items-center gap-4">
+          {ready ? (
+            <span className="inline-flex items-center gap-2 rounded-full bg-sage/20 px-4 py-2 text-xs font-semibold tracking-[0.14em] text-sage">
+              <CheckCircle2 className="h-4 w-4" /> Ready to share
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 rounded-full bg-flame/20 px-4 py-2 text-xs font-semibold tracking-[0.14em] text-flame">
+              <AlertCircle className="h-4 w-4" /> Complete profile
+            </span>
+          )}
+          <span className="text-sm text-paper/50">{completion}% complete · {missing.length} field(s) missing</span>
+        </div>
+        <Link to={`/project/${project.id}`} className="label-sm inline-flex items-center gap-2 text-sun hover:text-paper">
+          Edit profile <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      {/* Stats strip */}
+      <div className="mt-8 grid grid-cols-2 gap-px overflow-hidden rounded-2xl bg-white/10 sm:grid-cols-4">
+        {[
+          { label: "Games", value: games.length, icon: Film, to: `/project/${project.id}?tab=games` },
+          { label: "Clips", value: clips.length, icon: Scissors, to: `/project/${project.id}?tab=clips` },
+          { label: "Reels", value: reels.length, icon: Film, to: `/project/${project.id}?tab=exports` },
+          { label: "Views", value: views, icon: Eye, to: `/project/${project.id}?tab=analytics` },
+        ].map((s) => (
+          <Link key={s.label} to={s.to} className="group bg-ink-soft p-5 transition hover:bg-white/5">
+            <div className="flex items-center justify-between">
+              <s.icon className="h-4 w-4 text-paper/40" />
+              <ChevronRight className="h-4 w-4 text-paper/20 transition group-hover:text-sun" />
+            </div>
+            <p className="mt-3 font-display text-4xl leading-none">{s.value}</p>
+            <p className="label-xs mt-1.5 text-paper/45">{s.label}</p>
+          </Link>
+        ))}
+      </div>
+
+      {newInquiries > 0 && (
+        <Link to={`/project/${project.id}?tab=inquiries`} className="mt-3 flex items-center gap-2 rounded-xl border border-sun/30 bg-sun/10 px-4 py-3 text-sm text-sun hover:bg-sun/20">
+          <Mail className="h-4 w-4" /> You have {newInquiries} new coach inquiry{newInquiries > 1 ? "s" : ""}. <ArrowRight className="ml-auto h-4 w-4" />
+        </Link>
+      )}
+
+      <div className="mt-10 grid gap-8 lg:grid-cols-2">
+        {/* Recent games */}
+        <div>
+          <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
+            <h2 className="font-display text-2xl uppercase tracking-tight">Recent games</h2>
+            <Link to={`/project/${project.id}?tab=games`} className="label-xs text-sun hover:text-paper">All</Link>
           </div>
-          <p className="mt-4 font-display text-7xl leading-none sm:text-8xl">{completion}<span className="text-flame">%</span></p>
-          <Progress value={completion} className="mt-5 h-1.5 bg-ink/10" />
-          {missing.length > 0 && (
-            <p className="mt-4 text-sm text-ink/55">Missing: {missing.slice(0, 6).join(", ")}{missing.length > 6 ? "…" : ""}</p>
+          {recentGames.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-paper/40">
+              No games yet. <AddGameDialog projectId={project.id} onDone={load} trigger={<span className="text-sun underline">Upload your first game</span>} />.
+            </div>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {recentGames.map((g) => {
+                const gc = clips.filter((c) => c.game_id === g.id).length;
+                return (
+                  <button key={g.id} onClick={() => navigate(`/project/${project.id}/game/${g.id}`)}
+                    className="group flex w-full items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 text-left transition hover:border-white/15 hover:bg-white/[0.06]">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium group-hover:text-orange-400">{g.name}</p>
+                      <p className="text-xs text-paper/45">{[g.opponent && `vs ${g.opponent}`, g.game_date].filter(Boolean).join(" · ") || "No details"} · {gc} clips</p>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-paper/20 group-hover:text-sun" />
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
-        <div className="md:col-span-5">
-          <div className="flex h-full flex-col justify-between rounded-none border border-ink/15 bg-ink p-6 text-paper">
-            <p className="label-xs text-sun">The season</p>
-            <p className="mt-3 font-display text-3xl uppercase leading-tight">{project.team_name || "Unassigned"}</p>
-            <p className="mt-1 text-sm text-paper/60">{project.position || "—"}{project.jersey_number ? `  ·  #${project.jersey_number}` : ""}</p>
-            <Link to={`/project/${project.id}`} className="label-sm mt-6 inline-flex items-center gap-2 text-sun hover:text-paper">
-              Edit profile <ArrowRight className="h-4 w-4" />
-            </Link>
+
+        {/* AI processing */}
+        <div>
+          <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
+            <h2 className="font-display text-2xl uppercase tracking-tight">Processing</h2>
+            <span className="label-xs text-paper/40">{processing.length} active</span>
           </div>
-        </div>
-      </div>
-
-      {/* Oversized statistics */}
-      <div className="mt-16">
-        <div className="flex items-end justify-between gap-6 border-b border-ink/15 pb-4">
-          <h2 className="display-xl text-3xl sm:text-5xl">By the numbers</h2>
-          <span className="label-xs text-ink/50">Live</span>
-        </div>
-        <div className="mt-6 grid gap-px bg-ink/15 sm:grid-cols-2 lg:grid-cols-3">
-          {stats.map((s) => (
-            <div key={s.label} className={`flex flex-col justify-between p-7 ${CARD_TONES[s.tone]}`}>
-              <div className="flex items-center justify-between">
-                <s.icon className="h-5 w-5 opacity-70" />
-                <span className="label-xs opacity-60">{s.label}</span>
-              </div>
-              <p className="mt-6 font-display text-6xl leading-none sm:text-7xl">{s.value}</p>
+          {processing.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-paper/40">
+              Nothing processing. All up to date.
             </div>
-          ))}
+          ) : (
+            <div className="mt-4 space-y-3">
+              {processing.map((s) => (
+                <div key={s.id} className="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-sm font-medium">{s.title || s.url}</p>
+                    <StatusBadge status={s.status} />
+                  </div>
+                  <Progress value={s.progress || 5} className="mt-3 h-1.5 bg-white/10" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Highlight categories */}
-      <div className="mt-16">
-        <div className="flex items-end justify-between gap-6 border-b border-ink/15 pb-4">
-          <h2 className="display-xl text-3xl sm:text-5xl">Highlights</h2>
-          <Link to={`/project/${project.id}?tab=clips`} className="label-sm inline-flex items-center gap-2 text-flame hover:text-ink">
-            All clips <ArrowRight className="h-4 w-4" />
-          </Link>
+        {/* Recent clips */}
+        <div>
+          <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
+            <h2 className="font-display text-2xl uppercase tracking-tight">Top clips</h2>
+            <Link to={`/project/${project.id}?tab=clips`} className="label-xs text-sun hover:text-paper">All</Link>
+          </div>
+          {recentClips.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-paper/40">
+              No accepted clips yet. Upload a game to get started.
+            </div>
+          ) : (
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {recentClips.map((c) => {
+                const meta = catMeta(c.category);
+                return (
+                  <Link key={c.id} to={`/project/${project.id}/game/${c.game_id}`}
+                    className="group rounded-xl border border-white/5 bg-white/[0.03] p-3 transition hover:border-white/15">
+                    <div className="flex items-center justify-between">
+                      <span className="text-lg">{meta.emoji}</span>
+                      <span className="text-[10px] font-semibold text-orange-400">★ {c.highlight_score || 0}</span>
+                    </div>
+                    <p className="mt-2 truncate text-xs font-medium">{c.play_type || c.description || meta.label}</p>
+                    <p className="text-[10px] text-paper/40">{fmtTime(c.start_seconds)}–{fmtTime(c.end_seconds)}</p>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {CATEGORIES.map((c, i) => {
-            const tones = ["bg-paper", "bg-sun", "bg-rose", "bg-sage"];
-            return (
-              <Link key={c.key} to={`/project/${project.id}?tab=${c.key}`}
-                className={`group flex flex-col justify-between p-6 ${tones[i % tones.length]} transition hover:-translate-y-1`}>
-                <span className="text-3xl">{c.emoji}</span>
-                <p className="mt-6 font-display text-6xl leading-none">{clips.filter((x) => x.category === c.key).length}</p>
-                <p className="label-xs mt-2 text-ink/60">{c.label}</p>
-              </Link>
-            );
-          })}
+
+        {/* Highlight reels */}
+        <div>
+          <div className="flex items-end justify-between gap-4 border-b border-white/10 pb-3">
+            <h2 className="font-display text-2xl uppercase tracking-tight">Highlight reels</h2>
+            <Link to={`/project/${project.id}?tab=exports`} className="label-xs text-sun hover:text-paper">All</Link>
+          </div>
+          {reels.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-paper/40">
+              No reels yet. {hasAcceptedClips
+                ? <CreateReelDialog project={project} games={games} clips={clips} reload={load} trigger={<span className="text-sun underline">Create one</span>} />
+                : "Accept some clips first."}
+            </div>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {reels.slice(0, 3).map((t) => (
+                <Link key={t.id} to={`/project/${project.id}?tab=exports`}
+                  className="group flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 transition hover:border-white/15">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{t.version_label || t.title || "Highlight reel"} {t.is_featured && <Star className="ml-1 inline h-3.5 w-3.5 fill-orange-400 text-orange-400" />}</p>
+                    <p className="text-xs text-paper/45">{t.clip_count} clips · {fmtTime(t.duration_seconds)} · {t.reel_length || "—"}</p>
+                  </div>
+                  <Play className="h-4 w-4 shrink-0 text-paper/20 group-hover:text-sun" />
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
