@@ -8,7 +8,7 @@ export default function PageShell({ items, brandTo = "/", footer, actions, child
     <div className="relative min-h-screen font-body text-foreground">
       <AmbientBackground />
       <SiteNav items={items} brandTo={brandTo} footer={footer} actions={actions} />
-      <main className={`pt-20 md:pt-6 md:pl-[92px] ${className}`}>
+      <main className={`pt-20 pb-24 md:pb-6 md:pt-6 md:pl-[92px] ${className}`}>
         {children}
       </main>
     </div>

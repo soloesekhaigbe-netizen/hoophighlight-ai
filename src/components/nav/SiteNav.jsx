@@ -5,7 +5,8 @@ import FullScreenMenu from "@/components/nav/FullScreenMenu";
 import { Menu } from "lucide-react";
 
 // Floating glass navigation: a detached vertical glass dock (md+) with squircle
-// icon buttons and a circular menu trigger; a floating glass top bar on mobile.
+// icon buttons and a circular menu trigger; a floating glass top bar on mobile,
+// plus a persistent bottom tab bar on small screens (<768px).
 export default function SiteNav({ items, brandTo = "/", footer, actions }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -16,6 +17,15 @@ export default function SiteNav({ items, brandTo = "/", footer, actions }) {
     if (n.to === "/dashboard") return location.pathname === "/dashboard";
     return location.pathname === n.to || (n.to && !n.to.startsWith("#") && location.pathname.startsWith(n.to));
   };
+
+  // Resolve the four persistent bottom-tab links by label from the provided items.
+  const find = (label) => items.find((n) => n.label === label);
+  const tabLinks = [
+    find("Dashboard"),
+    find("Highlights"),
+    find("Games"),
+    find("Settings"),
+  ].filter(Boolean);
 
   const MenuButton = ({ size = "h-12 w-12" }) => (
     <button
@@ -51,14 +61,38 @@ export default function SiteNav({ items, brandTo = "/", footer, actions }) {
         <MenuButton />
       </aside>
 
-      {/* Mobile floating top bar */}
-      <header className="fixed left-3 right-3 top-3 z-30 flex items-center justify-between glass-strong squircle px-4 py-2.5 md:hidden">
+      {/* Mobile floating top bar — padded below the notch via safe-area-inset-top */}
+      <header
+        className="fixed left-3 right-3 top-0 z-30 flex items-center justify-between glass-strong squircle px-4 py-2.5 md:hidden safe-pt">
         <Link to={brandTo} aria-label="Prospect home">
           <Monogram tone="sun" className="h-9 w-9" />
         </Link>
         <span className="font-display text-sm uppercase tracking-[0.2em] text-foreground">Prospect</span>
         <MenuButton size="h-10 w-10" />
       </header>
+
+      {/* Mobile persistent bottom tab bar (<768px) */}
+      {tabLinks.length > 0 && (
+        <nav
+          aria-label="Primary"
+          className="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around glass-strong safe-bottom md:hidden">
+          {tabLinks.map((n) => {
+            const active = isActive(n);
+            const Icon = n.icon;
+            return (
+              <Link
+                key={n.to}
+                to={n.to}
+                aria-label={n.label}
+                className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors ${active ? "text-primary" : "text-foreground/55"}`}
+              >
+                <Icon className="h-5 w-5" />
+                {n.label}
+              </Link>
+            );
+          })}
+        </nav>
+      )}
 
       {open && <FullScreenMenu items={items} onClose={() => setOpen(false)} footer={footer} actions={actions} />}
     </>

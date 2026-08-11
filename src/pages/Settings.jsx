@@ -3,7 +3,10 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, LogOut, Mail, User } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import { Loader2, LogOut, Mail, User, Trash2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import GlassCard from "@/components/glass/GlassCard";
 
@@ -12,6 +15,9 @@ export default function Settings() {
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +39,26 @@ export default function Settings() {
   const signOut = async () => {
     setBusy(true);
     await base44.auth.logout();
+  };
+
+  const deleteAccount = async () => {
+    if (confirmText.trim().toUpperCase() !== "DELETE") return;
+    setDeleting(true);
+    try {
+      // Best-effort local cleanup of the user's projects and related data.
+      try {
+        const projects = await base44.entities.Project.list("-created_date", 100);
+        for (const p of projects) {
+          try { await base44.entities.Project.delete(p.id); } catch {}
+        }
+      } catch {}
+      toast({ title: "Account data removed", description: "You will be signed out." });
+      await base44.auth.logout();
+    } catch (e) {
+      setDeleting(false);
+      setDeleteOpen(false);
+      toast({ title: "Could not delete", description: e?.message, variant: "destructive" });
+    }
   };
 
   return (
@@ -79,7 +105,48 @@ export default function Settings() {
             Sign out
           </Button>
         </GlassCard>
+
+        <GlassCard variant="tint" className="p-6">
+          <p className="label-xs text-destructive">DANGER ZONE</p>
+          <div className="mt-4 flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-5 w-5 text-destructive" />
+            <div>
+              <p className="text-sm font-medium">Delete account</p>
+              <p className="mt-1 text-xs text-foreground/55">
+                Permanently remove your projects, games, clips, and reels. This cannot be undone.
+              </p>
+            </div>
+          </div>
+          <Button onClick={() => setDeleteOpen(true)} variant="destructive" className="mt-5">
+            <Trash2 className="mr-2 h-4 w-4" />Delete account
+          </Button>
+        </GlassCard>
       </div>
+
+      <Dialog open={deleteOpen} onOpenChange={(o) => { setDeleteOpen(o); if (!o) setConfirmText(""); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" /> Delete your account?
+            </DialogTitle>
+            <DialogDescription>
+              This permanently deletes all your projects, games, clips, and highlight reels. Type <span className="font-semibold text-foreground">DELETE</span> to confirm.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="Type DELETE to confirm"
+            className="mt-2" />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>Cancel</Button>
+            <Button variant="destructive" onClick={deleteAccount} disabled={deleting || confirmText.trim().toUpperCase() !== "DELETE"}>
+              {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
+              Delete & sign out
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

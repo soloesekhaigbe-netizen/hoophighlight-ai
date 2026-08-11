@@ -3,9 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
 import {
   Film, Loader2, Scissors, Mail, Eye, ArrowRight, CheckCircle2, AlertCircle,
-  Upload, Camera, Sparkles, Play, ChevronRight, Star,
+  Upload, Camera, Sparkles, Play, ChevronRight, Star, RefreshCw,
 } from "lucide-react";
 import { ACTIVE_STATUSES, CATEGORIES, catMeta, fmtTime } from "@/lib/categories";
 import { profileCompletion, completionMissing, portfolioReady } from "@/lib/portfolio";
@@ -80,6 +81,9 @@ export default function Dashboard() {
     return () => clearInterval(t);
   }, [data.sources]);
 
+  // Native-like pull-to-refresh (must run on every render, before any early return).
+  const { pull, refreshing } = usePullToRefresh(load);
+
   const onRecord = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -130,6 +134,14 @@ export default function Dashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
+      {/* Pull-to-refresh indicator */}
+      <div
+        className="pointer-events-none flex items-center justify-center transition-opacity md:hidden"
+        style={{ height: pull, opacity: pull / 70 }}
+        aria-hidden="true">
+        <RefreshCw className={`h-6 w-6 text-primary ${refreshing ? "animate-spin" : ""}`}
+          style={{ transform: `rotate(${pull * 3}deg)` }} />
+      </div>
       {/* Greeting + quick actions */}
       <div className="animate-slide-up">
         <p className="label-xs text-primary">{greeting},</p>
