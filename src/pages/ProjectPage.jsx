@@ -12,6 +12,8 @@ import InquiriesTab from "@/components/project/InquiriesTab";
 import AnalyticsTab from "@/components/project/AnalyticsTab";
 import { ACTIVE_STATUSES } from "@/lib/categories";
 import SharePortfolioButton from "@/components/SharePortfolioButton";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function ProjectPage() {
   const { id } = useParams();
@@ -44,6 +46,9 @@ export default function ProjectPage() {
     return () => clearInterval(t);
   }, [state.sources, load]);
 
+  // Pull-to-refresh — runs before any early return so hooks stay consistent.
+  const { pull, refreshing } = usePullToRefresh(load);
+
   const { project, games, sources, clips, tapes, coaches, inquiries, events } = state;
   if (loading) return (
     <div className="flex min-h-[70vh] items-center justify-center">
@@ -67,6 +72,7 @@ export default function ProjectPage() {
   return (
     <div className="min-h-screen text-foreground">
       <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+        <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
         <Link to="/dashboard" className="label-xs inline-flex items-center gap-2 text-foreground/50 transition hover:text-primary">
           <ArrowLeft className="h-4 w-4" /> Dashboard
         </Link>

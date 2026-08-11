@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import MobileSelect from "@/components/ui/mobile-select";
 import ClipCard from "@/components/project/ClipCard";
 import ManualClipper from "@/components/project/ManualClipper";
 import ClipExtractionRunner from "@/components/project/ClipExtractionRunner";
@@ -107,48 +107,47 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/45" />
           <Input className="w-56  pl-9" placeholder="Search clips…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={gameFilter} onValueChange={setGameFilter}>
-          <SelectTrigger className="w-40 "><SelectValue placeholder="Game" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All games</SelectItem>
-            {games.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <MobileSelect
+          value={gameFilter} onValueChange={setGameFilter} placeholder="Game" title="Game"
+          triggerClassName="w-40"
+          options={[{ value: "all", label: "All games" }, ...games.map((g) => ({ value: g.id, label: g.name }))]}
+        />
         {!lockedCategory && (
-          <Select value={catFilter} onValueChange={setCatFilter}>
-            <SelectTrigger className="w-36 "><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.emoji} {c.label}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <MobileSelect
+            value={catFilter} onValueChange={setCatFilter} title="Category"
+            triggerClassName="w-36"
+            options={[{ value: "all", label: "All categories" }, ...CATEGORIES.map((c) => ({ value: c.key, label: `${c.emoji} ${c.label}` }))]}
+          />
         )}
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-32 "><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="accepted">Accepted</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={reelFilter} onValueChange={setReelFilter}>
-          <SelectTrigger className="w-32 "><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">In any reel</SelectItem>
-            <SelectItem value="used">Used in reel</SelectItem>
-            <SelectItem value="unused">Unused</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sort} onValueChange={setSort}>
-          <SelectTrigger className="w-36 "><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="order">Manual order</SelectItem>
-            <SelectItem value="game">By game</SelectItem>
-            <SelectItem value="date">By date</SelectItem>
-            <SelectItem value="confidence">By score</SelectItem>
-          </SelectContent>
-        </Select>
+        <MobileSelect
+          value={statusFilter} onValueChange={setStatusFilter} title="Status"
+          triggerClassName="w-32"
+          options={[
+            { value: "all", label: "All statuses" },
+            { value: "pending", label: "Pending" },
+            { value: "accepted", label: "Accepted" },
+            { value: "rejected", label: "Rejected" },
+          ]}
+        />
+        <MobileSelect
+          value={reelFilter} onValueChange={setReelFilter} title="Reel"
+          triggerClassName="w-32"
+          options={[
+            { value: "all", label: "In any reel" },
+            { value: "used", label: "Used in reel" },
+            { value: "unused", label: "Unused" },
+          ]}
+        />
+        <MobileSelect
+          value={sort} onValueChange={setSort} title="Sort"
+          triggerClassName="w-36"
+          options={[
+            { value: "order", label: "Manual order" },
+            { value: "game", label: "By game" },
+            { value: "date", label: "By date" },
+            { value: "confidence", label: "By score" },
+          ]}
+        />
         <Button size="sm" variant={favesOnly ? "default" : "outline"} className={favesOnly ? "" : ""}
           onClick={() => setFavesOnly((v) => !v)}>
           <Star className={`mr-1.5 h-3.5 w-3.5 ${favesOnly ? "fill-current" : ""}`} /> Favourites

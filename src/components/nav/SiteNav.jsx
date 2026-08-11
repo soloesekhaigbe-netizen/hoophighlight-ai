@@ -64,14 +64,14 @@ export default function SiteNav({ items, brandTo = "/", footer, actions }) {
       {/* Mobile floating top bar — padded below the notch via safe-area-inset-top */}
       <header
         className="fixed left-3 right-3 top-0 z-30 flex items-center justify-between glass-strong squircle px-4 py-2.5 md:hidden safe-pt">
-        <Link to={brandTo} aria-label="Prospect home">
+        <Link to={brandTo} aria-label="Prospect home" className="flex h-11 w-11 items-center justify-center">
           <Monogram tone="sun" className="h-9 w-9" />
         </Link>
         <span className="font-display text-sm uppercase tracking-[0.2em] text-foreground">Prospect</span>
-        <MenuButton size="h-10 w-10" />
+        <MenuButton size="h-11 w-11" />
       </header>
 
-      {/* Mobile persistent bottom tab bar (<768px) */}
+      {/* Mobile persistent bottom tab bar (<768px) — 44px+ touch targets */}
       {tabLinks.length > 0 && (
         <nav
           aria-label="Primary"
@@ -84,7 +84,7 @@ export default function SiteNav({ items, brandTo = "/", footer, actions }) {
                 key={n.to}
                 to={n.to}
                 aria-label={n.label}
-                className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors ${active ? "text-primary" : "text-foreground/55"}`}
+                className={`flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] transition-colors ${active ? "text-primary" : "text-foreground/55"}`}
               >
                 <Icon className="h-5 w-5" />
                 {n.label}

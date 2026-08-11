@@ -14,6 +14,8 @@ import GlassCard from "@/components/glass/GlassCard";
 import GlassAIPanel from "@/components/glass/GlassAIPanel";
 import { fmtTime, ACTIVE_STATUSES } from "@/lib/categories";
 import { useToast } from "@/components/ui/use-toast";
+import usePullToRefresh from "@/hooks/usePullToRefresh";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function GameWorkspace() {
   const { id, gameId } = useParams();
@@ -47,6 +49,9 @@ export default function GameWorkspace() {
     const t = setInterval(load, 4000);
     return () => clearInterval(t);
   }, [state.sources]);
+
+  // Pull-to-refresh — runs before any early return so hooks stay consistent.
+  const { pull, refreshing } = usePullToRefresh(load);
 
   const saveGame = async () => {
     setSaving(true);
@@ -113,6 +118,7 @@ export default function GameWorkspace() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Link to={`/project/${id}?tab=games`} className="label-xs inline-flex items-center gap-2 text-foreground/50 hover:text-primary">
         <ArrowLeft className="h-4 w-4" /> Games
       </Link>

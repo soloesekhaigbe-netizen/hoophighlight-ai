@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import usePullToRefresh from "@/hooks/usePullToRefresh";
 import {
   Film, Loader2, Scissors, Mail, Eye, ArrowRight, CheckCircle2, AlertCircle,
-  Upload, Camera, Sparkles, Play, ChevronRight, Star, RefreshCw,
+  Upload, Camera, Sparkles, Play, ChevronRight, Star,
 } from "lucide-react";
 import { ACTIVE_STATUSES, CATEGORIES, catMeta, fmtTime } from "@/lib/categories";
 import { profileCompletion, completionMissing, portfolioReady } from "@/lib/portfolio";
@@ -18,6 +18,7 @@ import GlassCard from "@/components/glass/GlassCard";
 import GlassStatCard from "@/components/glass/GlassStatCard";
 import GlassBadge from "@/components/glass/GlassBadge";
 import GlassAIPanel from "@/components/glass/GlassAIPanel";
+import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -135,13 +136,7 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-6xl px-6 py-10 sm:py-14">
       {/* Pull-to-refresh indicator */}
-      <div
-        className="pointer-events-none flex items-center justify-center transition-opacity md:hidden"
-        style={{ height: pull, opacity: pull / 70 }}
-        aria-hidden="true">
-        <RefreshCw className={`h-6 w-6 text-primary ${refreshing ? "animate-spin" : ""}`}
-          style={{ transform: `rotate(${pull * 3}deg)` }} />
-      </div>
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       {/* Greeting + quick actions */}
       <div className="animate-slide-up">
         <p className="label-xs text-primary">{greeting},</p>
