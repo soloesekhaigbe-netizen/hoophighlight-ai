@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -16,6 +16,8 @@ import SharePortfolioButton from "@/components/SharePortfolioButton";
 
 export default function ProjectPage() {
   const { id } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "overview";
   const [state, setState] = useState({ project: null, games: [], sources: [], clips: [], tapes: [], coaches: [], inquiries: [], events: [] });
   const [loading, setLoading] = useState(true);
 
@@ -45,66 +47,80 @@ export default function ProjectPage() {
 
   const { project, games, sources, clips, tapes, coaches, inquiries, events } = state;
   if (loading) return (
-    <div className="flex items-center justify-center py-24">
-      <Loader2 className="h-7 w-7 animate-spin text-orange-500" />
+    <div className="flex min-h-[70vh] items-center justify-center bg-ink">
+      <Loader2 className="h-8 w-8 animate-spin text-sun" />
     </div>
   );
   if (!project) return (
-    <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
-      <p className="font-heading text-lg font-semibold text-slate-200">Project not found</p>
-      <p className="text-sm text-slate-500">This project may have been removed.</p>
-      <Link to="/dashboard" className="text-sm font-medium text-orange-400 hover:text-orange-300">Back to dashboard</Link>
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 bg-ink px-6 text-center text-paper">
+      <p className="font-display text-3xl uppercase">Not found</p>
+      <Link to="/dashboard" className="label-sm text-sun">Back to dashboard</Link>
     </div>
   );
 
   const shared = { project, games, sources, clips, tapes, coaches, inquiries, events, reload: load };
+  const tabList = [
+    ["overview", "Overview"], ["games", "Games"], ["clips", "Clips"],
+    ...CATEGORIES.map((c) => [c.key, c.label]),
+    ["exports", "Exports"], ["portfolio", "Portfolio"],
+    ["outreach", "Outreach"], ["inquiries", "Inquiries"], ["analytics", "Analytics"],
+  ];
 
   return (
-    <div className="space-y-8">
-      <Link to="/dashboard" className="inline-flex items-center gap-2 text-xs tracking-[0.2em] text-slate-500 hover:text-slate-300">
-        <ArrowLeft className="h-4 w-4" /> DASHBOARD
-      </Link>
+    <div className="min-h-screen bg-ink text-paper">
+      <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+        <Link to="/dashboard" className="label-xs inline-flex items-center gap-2 text-paper/50 transition hover:text-sun">
+          <ArrowLeft className="h-4 w-4" /> Dashboard
+        </Link>
 
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] tracking-[0.3em] text-orange-400">
-            {[project.team_name, project.season].filter(Boolean).join(" · ") || "PLAYER PROJECT"}
-          </p>
-          <h1 className="mt-2 font-heading text-3xl font-semibold tracking-tight sm:text-4xl">
-            {project.player_name}{project.jersey_number ? <span className="text-slate-600"> #{project.jersey_number}</span> : null}
-          </h1>
+        {/* Editorial studio hero */}
+        <div className="relative mt-6 overflow-hidden rounded-none border border-white/10 bg-ink-soft p-6 sm:p-10">
+          <div className="pointer-events-none absolute -right-4 -top-10 select-none font-display text-[10rem] leading-none text-white/[0.06] sm:text-[16rem]">
+            {project.jersey_number || "00"}
+          </div>
+          <div className="relative flex flex-wrap items-end justify-between gap-6">
+            <div>
+              <p className="label-xs text-sun">
+                {[project.team_name, project.season].filter(Boolean).join("  ·  ") || "Player project"}
+              </p>
+              <h1 className="mt-3 font-display text-5xl uppercase leading-[0.9] tracking-tight sm:text-7xl">
+                {project.player_name}
+              </h1>
+              <p className="mt-4 label-sm text-paper/60">
+                {project.position}{project.height ? `  ·  ${project.height}` : ""}{project.team_name ? `  ·  ${project.team_name}` : ""}
+              </p>
+            </div>
+            <SharePortfolioButton project={project} label="Share portfolio" tone="light" />
+          </div>
         </div>
-        <SharePortfolioButton project={project} label="Share portfolio" />
+
+        <Tabs value={tab} onValueChange={(v) => setSearchParams({ tab: v }, { replace: true })} className="mt-8">
+          <TabsList className="flex w-full gap-1 overflow-x-auto rounded-none border-b border-white/10 bg-transparent p-0 no-scrollbar">
+            {tabList.map(([v, l]) => (
+              <TabsTrigger key={v} value={v}
+                className="shrink-0 whitespace-nowrap rounded-none border-b-2 border-transparent px-4 py-3 text-xs font-semibold uppercase tracking-[0.16em] text-paper/55 transition data-[state=active]:border-sun data-[state=active]:bg-transparent data-[state=active]:text-sun data-[state=active]:shadow-none hover:text-paper">
+                {l}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <div className="mt-8">
+            <TabsContent value="overview"><OverviewTab {...shared} /></TabsContent>
+            <TabsContent value="games"><GamesTab {...shared} /></TabsContent>
+            <TabsContent value="clips"><ClipsTab {...shared} /></TabsContent>
+            {CATEGORIES.map((c) => (
+              <TabsContent key={c.key} value={c.key}>
+                <ClipsTab {...shared} lockedCategory={c.key} />
+              </TabsContent>
+            ))}
+            <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
+            <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
+            <TabsContent value="outreach"><CoachOutreachTab {...shared} /></TabsContent>
+            <TabsContent value="inquiries"><InquiriesTab {...shared} /></TabsContent>
+            <TabsContent value="analytics"><AnalyticsTab {...shared} /></TabsContent>
+          </div>
+        </Tabs>
       </div>
-
-      <Tabs defaultValue="overview">
-        <TabsList className="flex w-full gap-1 overflow-x-auto bg-white/5 p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {[["overview", "OVERVIEW"], ["games", "GAMES"], ["clips", "CLIPS"],
-            ...CATEGORIES.map((c) => [c.key, c.label]), ["exports", "EXPORTS"],
-            ["portfolio", "PORTFOLIO"], ["outreach", "OUTREACH"], ["inquiries", "INQUIRIES"], ["analytics", "ANALYTICS"]].map(([v, l]) => (
-            <TabsTrigger key={v} value={v}
-              className="shrink-0 whitespace-nowrap text-[11px] tracking-[0.18em] data-[state=active]:bg-orange-500 data-[state=active]:text-slate-950">
-              {l}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <div className="mt-8">
-          <TabsContent value="overview"><OverviewTab {...shared} /></TabsContent>
-          <TabsContent value="games"><GamesTab {...shared} /></TabsContent>
-          <TabsContent value="clips"><ClipsTab {...shared} /></TabsContent>
-          {CATEGORIES.map((c) => (
-            <TabsContent key={c.key} value={c.key}>
-              <ClipsTab {...shared} lockedCategory={c.key} />
-            </TabsContent>
-          ))}
-          <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
-          <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
-          <TabsContent value="outreach"><CoachOutreachTab {...shared} /></TabsContent>
-          <TabsContent value="inquiries"><InquiriesTab {...shared} /></TabsContent>
-          <TabsContent value="analytics"><AnalyticsTab {...shared} /></TabsContent>
-        </div>
-      </Tabs>
     </div>
   );
 }

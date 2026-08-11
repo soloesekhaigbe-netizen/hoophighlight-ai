@@ -4,7 +4,7 @@ import ClipPlayer from "@/components/ClipPlayer";
 import { CATEGORIES, catMeta, fmtTime } from "@/lib/categories";
 import { Play } from "lucide-react";
 
-function HighlightClip({ clip }) {
+function HighlightClip({ clip, large = false }) {
   const [tracked, setTracked] = useState(false);
   const onPlay = () => {
     if (tracked) return;
@@ -13,17 +13,20 @@ function HighlightClip({ clip }) {
   };
   const meta = catMeta(clip.category);
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/5 bg-white/[0.03] transition hover:border-orange-500/30">
-      <div onClick={onPlay}>
+    <div className="group relative overflow-hidden border-2 border-ink transition hover:border-flame">
+      <div onClick={onPlay} className={large ? "aspect-video" : "aspect-video"}>
         <ClipPlayer clip={clip} source={
           clip.source_type === "youtube" || clip.source_type === "veo"
             ? { source_type: clip.source_type, external_id: clip.external_id }
             : { source_type: "file", file_url: clip.clip_url }
         } />
       </div>
-      <div className="p-4">
-        <p className="text-sm font-medium text-slate-100">{clip.description || clip.play_type || meta.label}</p>
-        <p className="mt-0.5 text-xs text-slate-500">Segment {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)}</p>
+      <span className="pointer-events-none absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-full bg-sun text-ink opacity-0 transition group-hover:opacity-100">
+        <Play className="h-5 w-5" />
+      </span>
+      <div className="border-t-2 border-ink bg-paper p-4">
+        <p className="font-heading text-sm font-semibold text-ink">{clip.description || clip.play_type || meta.label}</p>
+        <p className="mt-1 label-xs text-ink/50">Segment {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)}</p>
       </div>
     </div>
   );
@@ -34,39 +37,43 @@ export default function HighlightsGrid({ clips, tapes, projectId }) {
   const hasAny = clips.length > 0;
 
   return (
-    <section>
-      <h2 className="text-[11px] tracking-[0.3em] text-orange-400">HIGHLIGHTS</h2>
-      <p className="mt-2 text-sm text-slate-400">
-        {tapes.length} tape(s) · {clips.length} clip(s){hasAny ? "" : " — no published highlights yet"}
-      </p>
-
-      <div className="mt-6 space-y-8">
-        {CATEGORIES.map((c) => {
-          const list = byCat(c.key);
-          if (!list.length) return null;
-          const tape = tapes.find((t) => t.category === c.key);
-          return (
-            <div key={c.key}>
-              <div className="mb-3 flex items-center gap-2">
-                <span className="text-lg">{c.emoji}</span>
-                <h3 className="text-sm font-semibold tracking-[0.18em] text-slate-200">{c.label}</h3>
-                {tape && <span className="text-xs text-slate-500">· {tape.clip_count} clips</span>}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {list.map((clip) => <HighlightClip key={clip.id} clip={{ ...clip, project_id: projectId }} />)}
-              </div>
-            </div>
-          );
-        })}
-        {!hasAny && (
-          <div className="flex items-center gap-4 rounded-2xl border border-white/5 bg-white/[0.03] p-8">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
-              <Play className="h-5 w-5" />
-            </span>
-            <p className="text-sm text-slate-400">Highlights will appear here once the player publishes clips.</p>
-          </div>
-        )}
+    <div>
+      <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
+        <h2 className="display-xl text-5xl sm:text-7xl">Highlights.</h2>
+        <span className="label-xs text-ink/50">{clips.length} clip(s) · {tapes.length} tape(s)</span>
       </div>
-    </section>
+
+      {hasAny ? (
+        <div className="mt-8 space-y-12">
+          {CATEGORIES.map((c) => {
+            const list = byCat(c.key);
+            if (!list.length) return null;
+            const tape = tapes.find((t) => t.category === c.key);
+            return (
+              <div key={c.key}>
+                <div className="mb-4 flex items-baseline gap-3">
+                  <span className="text-2xl">{c.emoji}</span>
+                  <h3 className="font-display text-3xl uppercase">{c.label}</h3>
+                  {tape && <span className="label-xs text-ink/50">· {tape.clip_count} clips</span>}
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {list.map((clip, i) => (
+                    <div key={clip.id} className={i === 0 ? "sm:col-span-2" : ""}>
+                      <HighlightClip clip={{ ...clip, project_id: projectId }} large={i === 0} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="mt-8 border-2 border-ink p-10 text-center sm:p-16">
+          <p className="display-xl text-5xl sm:text-7xl">No</p>
+          <p className="display-xl text-5xl sm:text-7xl">highlights</p>
+          <p className="display-xl text-5xl text-flame sm:text-7xl">yet.</p>
+        </div>
+      )}
+    </div>
   );
 }

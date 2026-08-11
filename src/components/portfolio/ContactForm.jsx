@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Loader2, CheckCircle2 } from "lucide-react";
+import { Loader2, CheckCircle2, ArrowRight } from "lucide-react";
 
-// Visual-only redesign of the existing public contact form. Fields, validation
-// and submission logic are unchanged.
+// Editorial contact section. Fields, validation and submission logic unchanged.
 export default function ContactForm({ projectId, player }) {
   const [form, setForm] = useState({ coach_name: "", coach_email: "", school: "", message: "" });
   const [busy, setBusy] = useState(false);
@@ -34,50 +33,56 @@ export default function ContactForm({ projectId, player }) {
 
   if (sent) {
     return (
-      <section className="rounded-3xl border border-emerald-500/20 bg-emerald-500/[0.06] p-8 text-center">
-        <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-400" />
-        <p className="mt-3 font-heading text-lg font-semibold text-emerald-300">Message sent</p>
-        <p className="mt-1 text-sm text-slate-400">The player has been notified and will reply to you at {form.coach_email}.</p>
-      </section>
+      <div className="animate-slide-up border-2 border-sun p-10 text-center sm:p-16">
+        <CheckCircle2 className="mx-auto h-10 w-10 text-sun" />
+        <p className="mt-4 font-display text-4xl uppercase sm:text-6xl">Message sent.</p>
+        <p className="mt-3 text-paper/70">The player has been notified and will reply to you at {form.coach_email}.</p>
+      </div>
     );
   }
 
   return (
-    <section className="rounded-3xl border border-white/5 bg-white/[0.03] p-6 sm:p-8">
-      <h2 className="text-[11px] tracking-[0.3em] text-orange-400">CONTACT {player?.player_name?.toUpperCase()}</h2>
-      <p className="mt-2 text-sm text-slate-400">Send a message — the player is notified directly.</p>
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+    <div className="animate-slide-up">
+      <p className="label-xs text-sun">Contact</p>
+      <h2 className="mt-3 display-xl text-5xl sm:text-8xl">Let's<br />talk.</h2>
+      <p className="mt-5 max-w-md text-paper/70">Send a message — {player?.player_name || "the player"} is notified directly.</p>
+
+      <div className="mt-10 grid gap-5 sm:grid-cols-2">
         <div>
-          <Label className="text-xs text-slate-400">Your name</Label>
+          <Label className="label-xs text-paper/60">Your name</Label>
           <Input required value={form.coach_name} onChange={(e) => set("coach_name", e.target.value)}
-            className="mt-1.5 h-11 border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500" placeholder="Coach Smith" />
+            className="mt-2 h-12 rounded-none border-2 border-paper/25 bg-transparent text-paper placeholder:text-paper/30 focus-visible:ring-sun"
+            placeholder="Coach Smith" />
         </div>
         <div>
-          <Label className="text-xs text-slate-400">School / programme</Label>
+          <Label className="label-xs text-paper/60">School / programme</Label>
           <Input value={form.school} onChange={(e) => set("school", e.target.value)}
-            className="mt-1.5 h-11 border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500" placeholder="State University" />
+            className="mt-2 h-12 rounded-none border-2 border-paper/25 bg-transparent text-paper placeholder:text-paper/30 focus-visible:ring-sun"
+            placeholder="State University" />
         </div>
         <div className="sm:col-span-2">
-          <Label className="text-xs text-slate-400">Email</Label>
+          <Label className="label-xs text-paper/60">Email</Label>
           <Input required type="email" value={form.coach_email} onChange={(e) => set("coach_email", e.target.value)}
-            className="mt-1.5 h-11 border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500" placeholder="coach@school.edu" />
+            className="mt-2 h-12 rounded-none border-2 border-paper/25 bg-transparent text-paper placeholder:text-paper/30 focus-visible:ring-sun"
+            placeholder="coach@school.edu" />
         </div>
         <div className="sm:col-span-2">
-          <Label className="text-xs text-slate-400">Message</Label>
-          <Textarea required rows={4} value={form.message} onChange={(e) => set("message", e.target.value)}
-            className="mt-1.5 border-white/10 bg-white/5 text-slate-100 placeholder:text-slate-500" placeholder="Interested in learning more about your game — can we set up a call?" />
+          <Label className="label-xs text-paper/60">Message</Label>
+          <Textarea required rows={5} value={form.message} onChange={(e) => set("message", e.target.value)}
+            className="mt-2 rounded-none border-2 border-paper/25 bg-transparent text-paper placeholder:text-paper/30 focus-visible:ring-sun"
+            placeholder="Interested in learning more about your game — can we set up a call?" />
         </div>
-        {error && <p className="sm:col-span-2 text-sm text-rose-400">{error}</p>}
+        {error && <p className="sm:col-span-2 text-sm text-flame">{error}</p>}
         <div className="sm:col-span-2">
           <Button onClick={submit} disabled={busy}
-            className="h-11 w-full bg-orange-500 font-semibold tracking-widest text-slate-950 hover:bg-orange-400">
-            {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> SENDING…</> : "SEND MESSAGE"}
+            className="h-12 w-full rounded-none bg-sun py-3.5 font-heading text-sm font-semibold uppercase tracking-[0.18em] text-ink hover:bg-sun-deep">
+            {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</> : <>Send message <ArrowRight className="ml-2 h-4 w-4" /></>}
           </Button>
         </div>
         {player?.email && (
-          <p className="sm:col-span-2 text-center text-xs text-slate-500">Or email directly: {player.email}</p>
+          <p className="sm:col-span-2 text-center text-xs text-paper/40">Or email directly: {player.email}</p>
         )}
       </div>
-    </section>
+    </div>
   );
 }

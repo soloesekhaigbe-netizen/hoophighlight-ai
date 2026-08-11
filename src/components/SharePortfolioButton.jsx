@@ -4,10 +4,16 @@ import { Share2, Check } from "lucide-react";
 import { portfolioLink } from "@/lib/portfolio";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function SharePortfolioButton({ project, variant = "outline", label = "Share" }) {
+// tone="dark"  → for light surfaces (paper dashboard): ink border + ink text
+// tone="light" → for dark surfaces (ink project studio): paper border + paper text
+export default function SharePortfolioButton({ project, variant = "outline", label = "Share", tone = "dark" }) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
   if (!project) return null;
+
+  const toneCls = tone === "light"
+    ? "border-paper/30 text-paper hover:bg-paper hover:text-ink"
+    : "border-ink/25 text-ink hover:bg-ink hover:text-paper";
 
   const share = async () => {
     const url = portfolioLink(project);
@@ -28,7 +34,7 @@ export default function SharePortfolioButton({ project, variant = "outline", lab
   };
 
   return (
-    <Button onClick={share} variant={variant} className="border-white/15">
+    <Button onClick={share} variant={variant} className={`rounded-none ${toneCls}`}>
       {copied ? <Check className="mr-2 h-4 w-4" /> : <Share2 className="mr-2 h-4 w-4" />}
       {copied ? "Copied" : label}
     </Button>

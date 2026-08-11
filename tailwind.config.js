@@ -12,6 +12,12 @@ module.exports = {
   		colors: {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
+  			ink: { DEFAULT: '#111111', soft: '#1c1c1c' },
+  			paper: { DEFAULT: '#F4F0E8', deep: '#E9E3D6' },
+  			sun: { DEFAULT: '#F7C948', deep: '#E6B434' },
+  			flame: { DEFAULT: '#FF5A1F', deep: '#E8470F' },
+  			rose: { DEFAULT: '#E2A6A0', deep: '#CF8C85' },
+  			sage: { DEFAULT: '#5FB07A', deep: '#4A9763' },
   			card: {
   				DEFAULT: 'hsl(var(--card))',
   				foreground: 'hsl(var(--card-foreground))'
@@ -75,24 +81,11 @@ module.exports = {
   			'accordion-up': {
   				from: { height: 'var(--radix-accordion-content-height)' },
   				to: { height: '0' }
-  			},
-  			'hs-fade-in': {
-  				from: { opacity: '0' },
-  				to: { opacity: '1' }
-  			},
-  			'hs-slide-up': {
-  				from: { opacity: '0', transform: 'translateY(10px)' },
-  				to: { opacity: '1', transform: 'translateY(0)' }
-  			},
-  			'hs-shimmer': {
-  				'100%': { transform: 'translateX(100%)' }
   			}
   		},
   		animation: {
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'fade-in': 'hs-fade-in 0.4s ease-out both',
-  			'slide-up': 'hs-slide-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both'
+  			'accordion-up': 'accordion-up 0.2s ease-out'
   		}
   	}
   },

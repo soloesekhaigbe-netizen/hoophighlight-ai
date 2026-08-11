@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import Logo from "@/components/Logo";
 
 // Premium dark auth shell. The design tokens resolve to the dark navy theme, so
@@ -6,9 +7,9 @@ import Logo from "@/components/Logo";
 export default function AuthLayout({ icon: Icon, title, subtitle, footer, children }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background px-4 py-10">
-      <div className="mb-8">
+      <Link to="/" className="mb-8 inline-flex">
         <Logo markClass="h-10 w-10" />
-      </div>
+      </Link>
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-5 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-orange-500/12 text-orange-400">

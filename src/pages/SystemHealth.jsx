@@ -32,48 +32,46 @@ export default function SystemHealth() {
   const item = (key) => (data && data.results ? data.results[key] : { status: "NOT_TESTED", detail: "Not run yet." });
 
   return (
-    <div className="space-y-8">
-      <div>
-        <p className="text-[11px] tracking-[0.3em] text-orange-400">ADMIN</p>
-        <h1 className="mt-2 font-heading text-3xl font-semibold">Video System Health</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-400">
-          Real probes of each subsystem. No component is shown as WORKING unless the operation actually succeeded.
-        </p>
-      </div>
+    <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+      <p className="label-xs text-flame">Admin</p>
+      <h1 className="mt-2 display-xl text-4xl sm:text-6xl">System<br />health.</h1>
+      <p className="mt-5 max-w-2xl text-ink/65">
+        Real probes of each subsystem. No component is shown as WORKING unless the operation actually succeeded.
+      </p>
 
-      <Button onClick={run} disabled={busy} className="bg-orange-500 text-slate-950 hover:bg-orange-400">
-        {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> TESTING…</> : <><Activity className="mr-2 h-4 w-4" /> RUN FULL SYSTEM TEST</>}
+      <Button onClick={run} disabled={busy} className="mt-8 rounded-none bg-ink text-paper hover:bg-ink-soft">
+        {busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing…</> : <><Activity className="mr-2 h-4 w-4" /> Run full system test</>}
       </Button>
 
       {data && data.summary && (
-        <div className="flex gap-4 text-sm">
-          <span className="text-emerald-400">{data.summary.working} working</span>
-          <span className="text-rose-400">{data.summary.not_working} not working</span>
-          <span className="text-slate-400">{data.summary.not_tested} not tested</span>
+        <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 label-xs">
+          <span className="text-sage-deep">{data.summary.working} working</span>
+          <span className="text-flame">{data.summary.not_working} not working</span>
+          <span className="text-ink/40">{data.summary.not_tested} not tested</span>
         </div>
       )}
 
-      <div className="grid gap-3">
+      <div className="mt-8 grid gap-px bg-ink/15">
         {COMPONENTS.map(([key, label]) => {
           const r = item(key);
           const Icon = r.status === "WORKING" ? CheckCircle2 : r.status === "NOT_WORKING" ? XCircle : MinusCircle;
-          const tone = r.status === "WORKING" ? "text-emerald-400" : r.status === "NOT_WORKING" ? "text-rose-400" : "text-slate-400";
+          const tone = r.status === "WORKING" ? "text-sage-deep" : r.status === "NOT_WORKING" ? "text-flame" : "text-ink/40";
           return (
-            <div key={key} className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+            <div key={key} className="flex items-center justify-between bg-paper p-5">
               <div className="flex items-center gap-3">
                 <Icon className={`h-5 w-5 ${tone}`} />
-                <p className="text-sm font-medium">{label}</p>
+                <p className="font-heading text-sm font-semibold text-ink">{label}</p>
               </div>
               <div className="max-w-md text-right">
-                <p className={`text-[11px] font-semibold tracking-[0.18em] ${tone}`}>{r.status.replace(/_/g, " ")}</p>
-                <p className="mt-0.5 text-[11px] text-slate-500">{r.detail}</p>
+                <p className={`label-xs ${tone}`}>{r.status.replace(/_/g, " ")}</p>
+                <p className="mt-1 text-xs text-ink/50">{r.detail}</p>
               </div>
             </div>
           );
         })}
       </div>
 
-      {data && data.error && <p className="text-sm text-rose-400">{data.error}</p>}
+      {data && data.error && <p className="mt-6 text-sm text-flame">{data.error}</p>}
     </div>
   );
 }
