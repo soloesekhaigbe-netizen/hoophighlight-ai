@@ -27,7 +27,14 @@ export default function Dashboard() {
   const recordRef = useRef(null);
 
   const load = async () => {
-    const projects = await base44.entities.Project.list("-created_date", 50);
+    let projects;
+    try {
+      projects = await base44.entities.Project.list("-created_date", 50);
+    } catch (e) {
+      console.warn("Dashboard project load failed:", e?.message);
+      setLoading(false);
+      return;
+    }
     let project = projects[0] || null;
     if (!project) {
       setCreating(true);
@@ -52,13 +59,14 @@ export default function Dashboard() {
     }
     if (!project) { setLoading(false); return; }
     const pid = project.id;
+    const safe = (p) => p.catch((e) => { console.warn("Dashboard load partial failure:", e?.message); return []; });
     const [games, sources, clips, tapes, inquiries, events] = await Promise.all([
-      base44.entities.Game.filter({ project_id: pid }, "-created_date", 500),
-      base44.entities.VideoSource.filter({ project_id: pid }, "-created_date", 500),
-      base44.entities.Clip.filter({ project_id: pid }, "-created_date", 500),
-      base44.entities.HighlightTape.filter({ project_id: pid }, "-created_date", 500),
-      base44.entities.CoachInquiry.filter({ project_id: pid }, "-created_date", 500),
-      base44.entities.PortfolioEvent.filter({ project_id: pid }, "-created_date", 500),
+      safe(base44.entities.Game.filter({ project_id: pid }, "-created_date", 500)),
+      safe(base44.entities.VideoSource.filter({ project_id: pid }, "-created_date", 500)),
+      safe(base44.entities.Clip.filter({ project_id: pid }, "-created_date", 500)),
+      safe(base44.entities.HighlightTape.filter({ project_id: pid }, "-created_date", 500)),
+      safe(base44.entities.CoachInquiry.filter({ project_id: pid }, "-created_date", 500)),
+      safe(base44.entities.PortfolioEvent.filter({ project_id: pid }, "-created_date", 500)),
     ]);
     setData({ project, games, sources, clips, tapes, inquiries, events });
     setLoading(false);
