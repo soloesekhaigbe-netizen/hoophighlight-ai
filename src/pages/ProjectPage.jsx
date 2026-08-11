@@ -11,7 +11,7 @@ import PortfolioTab from "@/components/project/PortfolioTab";
 import CoachOutreachTab from "@/components/project/CoachOutreachTab";
 import InquiriesTab from "@/components/project/InquiriesTab";
 import AnalyticsTab from "@/components/project/AnalyticsTab";
-import { CATEGORIES, ACTIVE_STATUSES } from "@/lib/categories";
+import { ACTIVE_STATUSES } from "@/lib/categories";
 import SharePortfolioButton from "@/components/SharePortfolioButton";
 
 export default function ProjectPage() {

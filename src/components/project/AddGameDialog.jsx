@@ -28,32 +28,36 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
       project_id: projectId, game_id: game.id,
       urls: linkList, file_url: fileUrl, title: uploadFile?.name
     });
-    const { created = [], rejected = [] } = res.data || {};
+    const { created = [], rejected = [] } = res?.data || res || {};
     setErrors(rejected);
     onDone?.();
     for (const s of created) {
-      base44.functions.invoke("analyzeVideoSource", { video_source_id: s.id }).then(() => onDone?.());
+      base44.functions.invoke("analyzeVideoSource", { video_source_id: s.id }).then(() => onDone?.()).catch(() => {});
     }
-    setBusy(false);
     if (!rejected.length) { setOpen(false); setUrls(""); setForm({}); setUploadFile(null); }
   };
 
   const submit = async () => {
-    if (type === "file") {
-      if (!uploadFile) { setErrors([{ url: "", error: "Choose a video file to upload." }]); return; }
-      setBusy(true);
-      setErrors([]);
-      setUploading(true);
-      const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
-      setUploading(false);
-      await start(file_url, null);
-      return;
-    }
-    const list = urls.split("\n").map((u) => u.trim()).filter(Boolean);
-    if (!list.length) { setErrors([{ url: "", error: "Paste at least one video link." }]); return; }
-    setBusy(true);
     setErrors([]);
-    await start(null, list);
+    setBusy(true);
+    try {
+      if (type === "file") {
+        if (!uploadFile) { setErrors([{ url: "", error: "Choose a video file to upload." }]); return; }
+        setUploading(true);
+        const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
+        setUploading(false);
+        await start(file_url, null);
+        return;
+      }
+      const list = urls.split("\n").map((u) => u.trim()).filter(Boolean);
+      if (!list.length) { setErrors([{ url: "", error: "Paste at least one video link." }]); return; }
+      await start(null, list);
+    } catch (e) {
+      setErrors([{ url: "", error: e?.message || "Something went wrong. Please try again." }]);
+    } finally {
+      setBusy(false);
+      setUploading(false);
+    }
   };
 
   return (
