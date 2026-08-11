@@ -17,8 +17,10 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
   const verdict = identityVerdict(idConf, threshold);
   const confirmed = clip.player_confirmed || "unconfirmed";
 
+  const save = async (data) => { await base44.entities.Clip.update(clip.id, data); };
   const patch = async (data) => { await base44.entities.Clip.update(clip.id, data); reload(); };
   const remove = async () => { await base44.entities.Clip.delete(clip.id); reload(); };
+  const toggleEdit = () => { if (editing) reload(); setEditing(!editing); };
 
   const statusRing =
     clip.status === "accepted" ? "border-emerald-500/40" :
@@ -47,7 +49,7 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
         <div className="ml-auto flex items-center gap-1">
           <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => onMove?.(-1)}><ArrowUp className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => onMove?.(1)}><ArrowDown className="h-4 w-4" /></Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => setEditing((e) => !e)}><Pencil className="h-4 w-4" /></Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={toggleEdit}><Pencil className="h-4 w-4" /></Button>
         </div>
       </div>
 
@@ -86,24 +88,24 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
               <p className="text-[11px] tracking-[0.18em] text-slate-500">NAME</p>
               <Input className="mt-1 border-white/10 bg-white/5" defaultValue={clip.description || ""}
                 placeholder="e.g. Crossover pull-up three"
-                onBlur={(e) => patch({ description: e.target.value })} />
+                onBlur={(e) => save({ description: e.target.value })} />
             </div>
             <div>
               <p className="text-[11px] tracking-[0.18em] text-slate-500">PLAY TYPE</p>
               <Input className="mt-1 border-white/10 bg-white/5" defaultValue={clip.play_type || ""}
                 placeholder="e.g. layup, assist, block"
-                onBlur={(e) => patch({ play_type: e.target.value })} />
+                onBlur={(e) => save({ play_type: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[11px] tracking-[0.18em] text-slate-500">START (S)</p>
                 <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.start_seconds || 0)}
-                  onBlur={(e) => patch({ start_seconds: Number(e.target.value) })} />
+                  onBlur={(e) => save({ start_seconds: Number(e.target.value) })} />
               </div>
               <div>
                 <p className="text-[11px] tracking-[0.18em] text-slate-500">END (S)</p>
                 <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.end_seconds || 0)}
-                  onBlur={(e) => patch({ end_seconds: Number(e.target.value) })} />
+                  onBlur={(e) => save({ end_seconds: Number(e.target.value) })} />
               </div>
             </div>
             <div>
@@ -119,19 +121,19 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
               <div>
                 <p className="text-[11px] tracking-[0.18em] text-slate-500">PLAY CONFIDENCE</p>
                 <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.play_confidence ?? clip.confidence ?? 0)}
-                  onBlur={(e) => patch({ play_confidence: Number(e.target.value) })} />
+                  onBlur={(e) => save({ play_confidence: Number(e.target.value) })} />
               </div>
               <div>
                 <p className="text-[11px] tracking-[0.18em] text-slate-500">IDENTITY CONFIDENCE</p>
                 <Input type="number" className="mt-1 border-white/10 bg-white/5" defaultValue={Math.round(clip.identity_confidence ?? 0)}
-                  onBlur={(e) => patch({ identity_confidence: Number(e.target.value) })} />
+                  onBlur={(e) => save({ identity_confidence: Number(e.target.value) })} />
               </div>
             </div>
           </div>
           <div>
             <p className="text-[11px] tracking-[0.18em] text-slate-500">NOTES</p>
             <Textarea rows={6} className="mt-1 border-white/10 bg-white/5" defaultValue={clip.notes || ""}
-              onBlur={(e) => patch({ notes: e.target.value })} />
+              onBlur={(e) => save({ notes: e.target.value })} />
           </div>
         </div>
       )}
