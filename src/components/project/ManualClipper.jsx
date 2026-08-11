@@ -203,8 +203,8 @@ export default function ManualClipper({ project, games, sources, reload, default
         status: "accepted",
         order_index: 999,
         detection_source: "manual",
-        clip_url: src?.file_url || "",
-        processing_status: "ready",
+        clip_url: "",
+        processing_status: src?.source_type === "file" ? "extracting" : "ready",
       });
       setSavedClips((prev) => [...prev, { category: form.category, start, end, description: form.description || "Manually clipped" }]);
       setForm((f) => ({ ...f, start: 0, end: 8, description: "" }));

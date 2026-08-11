@@ -123,6 +123,16 @@ function MissingSource() {
   );
 }
 
+function PreparingState() {
+  return (
+    <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl bg-slate-900 text-center">
+      <Loader2 className="h-7 w-7 animate-spin text-orange-400" />
+      <p className="text-sm font-medium text-orange-200">Preparing clip…</p>
+      <p className="max-w-md text-xs text-slate-400">The real video file for this clip is being extracted in your browser. Tap "Extract clips" on the Clips tab.</p>
+    </div>
+  );
+}
+
 function FailedState({ onRetry, retrying }) {
   return (
     <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-xl bg-slate-900 text-center">
@@ -163,24 +173,26 @@ function EmbedPlayer({ source, clip, autoplay }) {
 
 export default function ClipPlayer({ clip, source, autoplay, onEnded }) {
   const [retrying, setRetrying] = useState(false);
-  const clipUrl = clip?.clip_url || (source?.source_type === "file" ? source?.file_url : "") || "";
-  const status = clip?.processing_status || (clipUrl ? "ready" : "failed");
+  const isLink = source?.source_type === "youtube" || source?.source_type === "veo";
+  const clipUrl = clip?.clip_url || "";
+  const status = isLink ? "ready" : (clip?.processing_status || (clipUrl ? "ready" : "extracting"));
 
   const retry = async () => {
     if (!clip?.id) return;
     setRetrying(true);
     try {
-      await base44.entities.Clip.update(clip.id, { processing_status: "ready", extraction_error: "" });
-      if (source?.file_url) await base44.entities.Clip.update(clip.id, { clip_url: source.file_url });
-      await base44.functions.invoke("extractClip", { clip_id: clip.id });
+      if (isLink) {
+        await base44.entities.Clip.update(clip.id, { processing_status: "ready", extraction_error: "" });
+      } else {
+        await base44.entities.Clip.update(clip.id, { processing_status: "extracting", clip_url: "", extraction_error: "" });
+      }
     } catch (_e) {}
     setRetrying(false);
   };
 
-  if (source?.source_type === "youtube" || source?.source_type === "veo") {
-    return <EmbedPlayer source={source} clip={clip} autoplay={autoplay} />;
-  }
-  if (status === "failed" && !clipUrl) return <FailedState onRetry={retry} retrying={retrying} />;
+  if (isLink) return <EmbedPlayer source={source} clip={clip} autoplay={autoplay} />;
+  if (status === "extracting") return <PreparingState />;
+  if (status === "failed") return <FailedState onRetry={retry} retrying={retrying} />;
   if (!clipUrl) return <MissingSource />;
   return (
     <ClipVideoPlayer

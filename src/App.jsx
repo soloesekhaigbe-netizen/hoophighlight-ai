@@ -16,6 +16,7 @@ import AppLayout from '@/components/Layout';
 import Dashboard from '@/pages/Dashboard';
 import ProjectPage from '@/pages/ProjectPage';
 import Portfolio from '@/pages/Portfolio';
+import SystemHealth from '@/pages/SystemHealth';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -52,6 +53,7 @@ const AuthenticatedApp = () => {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/project/:id" element={<ProjectPage />} />
+          <Route path="/system-health" element={<SystemHealth />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

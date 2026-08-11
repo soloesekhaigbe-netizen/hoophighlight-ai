@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// Clips play the real uploaded source file bounded to their segment, so no separate
-// extraction step is needed. This endpoint simply ensures the clip references the
-// source file and is marked ready for review (used by the "retry" action).
+// Retry trigger for a clip. Uploaded-file clips are extracted into real video
+// files in the player's browser (ClipExtractionRunner); this endpoint simply
+// resets the clip to "extracting" so the runner picks it up again. Link clips
+// play via embed and need no extraction.
 export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,20 +16,25 @@ export default async function (req) {
     const clip = await base44.entities.Clip.get(clip_id);
     if (!clip) return Response.json({ error: 'Clip not found' }, { status: 404 });
 
-    const source = await base44.entities.VideoSource.get(clip.video_source_id);
-    if (!source || !source.file_url) {
+    const source = clip.video_source_id ? await base44.entities.VideoSource.get(clip.video_source_id).catch(() => null) : null;
+    if (source && source.source_type === 'file') {
+      if (!source.file_url) {
+        await base44.entities.Clip.update(clip.id, {
+          processing_status: 'failed',
+          extraction_error: 'The source video file is unavailable. Re-upload the footage.'
+        });
+        return Response.json({ ok: false, error: 'Source file unavailable.' }, { status: 200 });
+      }
       await base44.entities.Clip.update(clip.id, {
-        processing_status: 'failed',
-        extraction_error: 'The source video file is unavailable. Re-upload the footage.'
+        processing_status: 'extracting',
+        clip_url: '',
+        extraction_error: ''
       });
-      return Response.json({ ok: false, error: 'Source file unavailable.' }, { status: 200 });
+      return Response.json({ ok: true, extracting: true });
     }
 
-    await base44.entities.Clip.update(clip.id, {
-      clip_url: source.file_url,
-      processing_status: 'ready',
-      extraction_error: ''
-    });
+    // Link source — playable via embed.
+    await base44.entities.Clip.update(clip.id, { processing_status: 'ready', extraction_error: '' });
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

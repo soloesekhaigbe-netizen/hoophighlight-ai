@@ -17,9 +17,24 @@ const FIELDS = [
   ["season", "Season"], ["position", "Position"], ["height", "Height"],
 ];
 
+const notifiedComplete = new Set();
+
 export default function OverviewTab({ project, games, sources, clips, reload }) {
   const [uploading, setUploading] = useState(false);
-  const patch = async (data) => { await base44.entities.Project.update(project.id, data); reload(); };
+  const patch = async (data) => {
+    await base44.entities.Project.update(project.id, data);
+    reload();
+    const next = { ...project, ...data };
+    if (profileCompletion(next) >= 100 && project.email && !notifiedComplete.has(project.id)) {
+      notifiedComplete.add(project.id);
+      try {
+        await base44.integrations.Core.SendEmail({
+          to: project.email, subject: "Profile complete",
+          body: `Hi ${project.player_name},\n\nYour recruiting profile is now complete. Share your portfolio link with college coaches to get noticed.`
+        });
+      } catch (_e) { /* best-effort */ }
+    }
+  };
 
   const photos = project.reference_photos || [];
 

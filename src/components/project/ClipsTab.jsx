@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ClipCard from "@/components/project/ClipCard";
 import ManualClipper from "@/components/project/ManualClipper";
+import ClipExtractionRunner from "@/components/project/ClipExtractionRunner";
 import { CATEGORIES } from "@/lib/categories";
 import { Trash2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
@@ -80,6 +81,7 @@ export default function ClipsTab({ project, games, sources, clips, reload, locke
 
   return (
     <div className="space-y-6">
+      <ClipExtractionRunner clips={clips} sources={sources} reload={reload} />
       <div className="flex flex-wrap items-center gap-3">
         <Select value={gameFilter} onValueChange={setGameFilter}>
           <SelectTrigger className="w-44 border-white/10 bg-white/5"><SelectValue placeholder="Game" /></SelectTrigger>

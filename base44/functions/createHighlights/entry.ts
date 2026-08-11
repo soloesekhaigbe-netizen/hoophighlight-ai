@@ -19,8 +19,12 @@ export default async function (req) {
     const project = await base44.entities.Project.get(project_id);
     if (!project) return Response.json({ error: 'Project not found' }, { status: 404 });
 
-    const allClips = await base44.entities.Clip.filter({ project_id });
-    const accepted = allClips.filter((c) => c.status === 'accepted' && c.processing_status === 'ready' && c.clip_url);
+    const [allClips, sources] = await Promise.all([
+      base44.entities.Clip.filter({ project_id }),
+      base44.entities.VideoSource.filter({ project_id })
+    ]);
+    const linkSrcIds = new Set(sources.filter((s) => s.source_type === 'youtube' || s.source_type === 'veo').map((s) => s.id));
+    const accepted = allClips.filter((c) => c.status === 'accepted' && c.processing_status === 'ready' && (c.clip_url || linkSrcIds.has(c.video_source_id)));
     const cats = categories && categories.length ? categories : ['buckets', 'rebounds', 'blocks', 'shooting'];
 
     const ready = [];
