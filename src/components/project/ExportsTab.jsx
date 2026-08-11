@@ -6,6 +6,7 @@ import { Play, Download, Loader2, AlertTriangle, RotateCw, Trash2, Star, Pencil,
 import TapePreview from "@/components/project/TapePreview";
 import ReelPlayer from "@/components/project/ReelPlayer";
 import ReelEditor from "@/components/project/ReelEditor";
+import ReelRenderer from "@/components/project/ReelRenderer";
 import CreateReelDialog from "@/components/project/CreateReelDialog";
 import SharePortfolioButton from "@/components/SharePortfolioButton";
 import { useToast } from "@/components/ui/use-toast";
@@ -18,6 +19,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
   const [editing, setEditing] = useState(null);
   const [editingLabel, setEditingLabel] = useState(null);
   const [labelVal, setLabelVal] = useState("");
+  const [rendering, setRendering] = useState(null);
   const { toast } = useToast();
 
   const create = async () => {
@@ -153,6 +155,15 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                     <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => setEditing(t)}>
                       <Pencil className="mr-1.5 h-3.5 w-3.5" /> Edit
                     </Button>
+                    {t.video_url && t.export_mode === "rendered" ? (
+                      <a href={t.video_url} download={`reel_${t.id}.webm`} target="_blank" rel="noreferrer">
+                        <Button size="sm" className="bg-white/10 hover:bg-white/20"><Download className="mr-1.5 h-3.5 w-3.5" /> Download</Button>
+                      </a>
+                    ) : (
+                      <Button size="sm" variant="outline" className="border-white/15 bg-transparent" onClick={() => setRendering(t)}>
+                        <Download className="mr-1.5 h-3.5 w-3.5" /> Render video
+                      </Button>
+                    )}
                     <SharePortfolioButton project={project} tone="light" />
                   </div>
                 </div>
@@ -216,6 +227,10 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
       {editing && (
         <ReelEditor open={!!editing} onOpenChange={() => setEditing(null)} tape={editing}
           clips={clips} sources={sources} games={games} project={project} />
+      )}
+      {rendering && (
+        <ReelRenderer open={!!rendering} onOpenChange={() => setRendering(null)} tape={rendering}
+          clips={clips} reload={reload} />
       )}
     </div>
   );
