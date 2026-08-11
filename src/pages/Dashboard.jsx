@@ -88,7 +88,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-10 animate-fade-in">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <p className="text-[11px] tracking-[0.34em] text-orange-400">PLAYER DASHBOARD</p>
@@ -132,9 +132,11 @@ export default function Dashboard() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {stats.map(([Icon, label, value]) => (
-          <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5">
-            <Icon className="h-5 w-5 text-orange-400" />
-            <p className="mt-4 text-3xl font-semibold">{value}</p>
+          <div key={label} className="rounded-2xl border border-white/5 bg-white/[0.03] p-5 transition hover:border-orange-500/30">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/12 text-orange-400">
+              <Icon className="h-5 w-5" />
+            </span>
+            <p className="mt-4 font-heading text-3xl font-semibold">{value}</p>
             <p className="mt-1 text-[11px] tracking-[0.2em] text-slate-500">{label}</p>
           </div>
         ))}

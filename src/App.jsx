@@ -17,6 +17,7 @@ import Dashboard from '@/pages/Dashboard';
 import ProjectPage from '@/pages/ProjectPage';
 import Portfolio from '@/pages/Portfolio';
 import SystemHealth from '@/pages/SystemHealth';
+import Landing from '@/pages/Landing';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -48,10 +49,11 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/portfolio/:id" element={<Portfolio />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route element={<AppLayout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/project/:id" element={<ProjectPage />} />
           <Route path="/system-health" element={<SystemHealth />} />
         </Route>

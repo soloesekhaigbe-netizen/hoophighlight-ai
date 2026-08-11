@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import OverviewTab from "@/components/project/OverviewTab";
 import GamesTab from "@/components/project/GamesTab";
 import ClipsTab from "@/components/project/ClipsTab";
@@ -44,14 +44,24 @@ export default function ProjectPage() {
   }, [state.sources, load]);
 
   const { project, games, sources, clips, tapes, coaches, inquiries, events } = state;
-  if (loading) return <p className="text-sm text-slate-500">Loading…</p>;
-  if (!project) return <p className="text-sm text-slate-400">Project not found.</p>;
+  if (loading) return (
+    <div className="flex items-center justify-center py-24">
+      <Loader2 className="h-7 w-7 animate-spin text-orange-500" />
+    </div>
+  );
+  if (!project) return (
+    <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+      <p className="font-heading text-lg font-semibold text-slate-200">Project not found</p>
+      <p className="text-sm text-slate-500">This project may have been removed.</p>
+      <Link to="/dashboard" className="text-sm font-medium text-orange-400 hover:text-orange-300">Back to dashboard</Link>
+    </div>
+  );
 
   const shared = { project, games, sources, clips, tapes, coaches, inquiries, events, reload: load };
 
   return (
     <div className="space-y-8">
-      <Link to="/" className="inline-flex items-center gap-2 text-xs tracking-[0.2em] text-slate-500 hover:text-slate-300">
+      <Link to="/dashboard" className="inline-flex items-center gap-2 text-xs tracking-[0.2em] text-slate-500 hover:text-slate-300">
         <ArrowLeft className="h-4 w-4" /> DASHBOARD
       </Link>
 

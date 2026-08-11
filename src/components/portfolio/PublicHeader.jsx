@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import Logo from "@/components/Logo";
 
 const NAV = [
   { label: "Overview", href: "#overview" },
@@ -37,9 +38,8 @@ export default function PublicHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-5 py-4 sm:px-6">
-        <Link to="/" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-lg">🏀</span>
-          <span className="text-sm font-semibold tracking-[0.28em] text-slate-200">HIGHLIGHT LAB</span>
+        <Link to="/" className="flex items-center">
+          <Logo />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
