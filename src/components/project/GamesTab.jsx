@@ -4,7 +4,8 @@ import { Progress } from "@/components/ui/progress";
 import { RotateCw, Trash2, AlertTriangle, Info } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
 import AddGameDialog from "@/components/project/AddGameDialog";
-import { Plus } from "lucide-react";
+import CreateReelDialog from "@/components/project/CreateReelDialog";
+import { Plus, Sparkles } from "lucide-react";
 
 export default function GamesTab({ project, games, sources, clips, reload }) {
   const retry = async (source) => {
@@ -49,9 +50,15 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
                   {[game.opponent && `vs ${game.opponent}`, game.game_date].filter(Boolean).join(" · ") || "No details"}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-rose-400" onClick={() => removeGame(game)}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                {clips.filter((c) => c.game_id === game.id && c.status === "accepted").length > 0 && (
+                  <CreateReelDialog project={project} games={games} clips={clips} reload={reload} presetGameIds={[game.id]}
+                    trigger={<Button variant="ghost" size="sm" className="text-orange-400 hover:text-orange-300"><Sparkles className="mr-1.5 h-3.5 w-3.5" />Reel</Button>} />
+                )}
+                <Button variant="ghost" size="sm" className="text-slate-500 hover:text-rose-400" onClick={() => removeGame(game)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
 
             <div className="mt-5 space-y-3">

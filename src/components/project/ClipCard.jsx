@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, X, Trash2, ArrowUp, ArrowDown, Pencil, UserCheck, UserX } from "lucide-react";
+import { Check, X, Trash2, ArrowUp, ArrowDown, Pencil, UserCheck, UserX, Star } from "lucide-react";
 import ClipPlayer from "@/components/ClipPlayer";
 import { CATEGORIES, catMeta, fmtTime, confidenceLabel, identityVerdict } from "@/lib/categories";
 
@@ -46,7 +46,13 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
         {clip.detection_source === "ai-vision" && (
           <span className="text-[10px] tracking-[0.16em] text-slate-500">AI VISION</span>
         )}
+        {(clip.highlight_score || 0) > 0 && (
+          <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300">AI {clip.highlight_score}</span>
+        )}
         <div className="ml-auto flex items-center gap-1">
+          <Button size="icon" variant="ghost" className={`h-8 w-8 ${clip.favourite ? "text-orange-400" : "text-slate-400 hover:text-orange-400"}`} onClick={() => patch({ favourite: !clip.favourite })}>
+            <Star className={`h-4 w-4 ${clip.favourite ? "fill-orange-400" : ""}`} />
+          </Button>
           <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => onMove?.(-1)}><ArrowUp className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={() => onMove?.(1)}><ArrowDown className="h-4 w-4" /></Button>
           <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-white" onClick={toggleEdit}><Pencil className="h-4 w-4" /></Button>

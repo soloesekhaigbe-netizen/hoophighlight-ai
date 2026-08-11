@@ -47,6 +47,14 @@
     "identity_confidence": {
       "type": "number"
     },
+    "highlight_score": {
+      "type": "number",
+      "default": 0
+    },
+    "favourite": {
+      "type": "boolean",
+      "default": false
+    },
     "player_confirmed": {
       "type": "string",
       "enum": [

@@ -23,6 +23,9 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
       name: form.name || `Game ${new Date().toLocaleDateString()}`,
       game_date: form.game_date || undefined,
       opponent: form.opponent || "",
+      competition: form.competition || "",
+      venue: form.venue || "",
+      team: form.team || "",
     });
     const res = await base44.functions.invoke("addVideoSource", {
       project_id: projectId, game_id: game.id,
@@ -92,6 +95,21 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
             <Label className="text-xs text-slate-400">Date</Label>
             <Input type="date" className="mt-1 border-white/10 bg-white/5" value={form.game_date || ""}
               onChange={(e) => setForm({ ...form, game_date: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-400">Team</Label>
+            <Input className="mt-1 border-white/10 bg-white/5" value={form.team || ""} placeholder="Titans"
+              onChange={(e) => setForm({ ...form, team: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-400">Competition</Label>
+            <Input className="mt-1 border-white/10 bg-white/5" value={form.competition || ""} placeholder="Premier League"
+              onChange={(e) => setForm({ ...form, competition: e.target.value })} />
+          </div>
+          <div>
+            <Label className="text-xs text-slate-400">Venue</Label>
+            <Input className="mt-1 border-white/10 bg-white/5" value={form.venue || ""} placeholder="Northampton"
+              onChange={(e) => setForm({ ...form, venue: e.target.value })} />
           </div>
         </div>
 

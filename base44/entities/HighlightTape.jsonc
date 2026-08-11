@@ -11,13 +11,20 @@
         "buckets",
         "rebounds",
         "blocks",
-        "shooting"
+        "shooting",
+        "mix"
       ]
     },
     "title": {
       "type": "string"
     },
     "clip_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "game_ids": {
       "type": "array",
       "items": {
         "type": "string"
@@ -58,6 +65,31 @@
     },
     "provider_job_id": {
       "type": "string"
+    },
+    "version_label": {
+      "type": "string"
+    },
+    "reel_length": {
+      "type": "string"
+    },
+    "selection_mode": {
+      "type": "string"
+    },
+    "style": {
+      "type": "string"
+    },
+    "include_fields": {
+      "type": "object"
+    },
+    "intro_text": {
+      "type": "string"
+    },
+    "outro_text": {
+      "type": "string"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false
     }
   },
   "required": [
