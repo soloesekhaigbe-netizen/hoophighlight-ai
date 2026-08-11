@@ -14,7 +14,7 @@ module.exports = {
   			foreground: 'hsl(var(--foreground))',
   			ink: { DEFAULT: '#111111', soft: '#1c1c1c' },
   			paper: { DEFAULT: '#F4F0E8', deep: '#E9E3D6' },
-  			sun: { DEFAULT: '#F7C948', deep: '#E6B434' },
+  			sun: { DEFAULT: '#FFB020', deep: '#E89500' },
   			flame: { DEFAULT: '#FF5A1F', deep: '#E8470F' },
   			rose: { DEFAULT: '#E2A6A0', deep: '#CF8C85' },
   			sage: { DEFAULT: '#5FB07A', deep: '#4A9763' },

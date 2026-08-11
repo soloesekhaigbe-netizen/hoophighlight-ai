@@ -13,7 +13,7 @@ function HighlightClip({ clip, large = false }) {
   };
   const meta = catMeta(clip.category);
   return (
-    <div className="group relative overflow-hidden border-2 border-ink transition hover:border-flame">
+    <div className="group relative overflow-hidden border-2 border-white/10 transition hover:border-flame">
       <div onClick={onPlay} className={large ? "aspect-video" : "aspect-video"}>
         <ClipPlayer clip={clip} source={
           clip.source_type === "youtube" || clip.source_type === "veo"
@@ -24,9 +24,9 @@ function HighlightClip({ clip, large = false }) {
       <span className="pointer-events-none absolute left-4 top-4 flex h-12 w-12 items-center justify-center rounded-full bg-sun text-ink opacity-0 transition group-hover:opacity-100">
         <Play className="h-5 w-5" />
       </span>
-      <div className="border-t-2 border-ink bg-paper p-4">
-        <p className="font-heading text-sm font-semibold text-ink">{clip.description || clip.play_type || meta.label}</p>
-        <p className="mt-1 label-xs text-ink/50">Segment {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)}</p>
+      <div className="border-t-2 border-white/10 bg-ink-soft p-4">
+        <p className="font-heading text-sm font-semibold text-paper">{clip.description || clip.play_type || meta.label}</p>
+        <p className="mt-1 label-xs text-paper/50">Segment {fmtTime(clip.start_seconds)}–{fmtTime(clip.end_seconds)}</p>
       </div>
     </div>
   );
@@ -38,9 +38,9 @@ export default function HighlightsGrid({ clips, tapes, projectId }) {
 
   return (
     <div>
-      <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
+      <div className="flex items-end justify-between gap-6 border-b-2 border-white/10 pb-4">
         <h2 className="display-xl text-5xl sm:text-7xl">Highlights.</h2>
-        <span className="label-xs text-ink/50">{clips.length} clip(s) · {tapes.length} tape(s)</span>
+        <span className="label-xs text-paper/50">{clips.length} clip(s) · {tapes.length} tape(s)</span>
       </div>
 
       {hasAny ? (
@@ -54,7 +54,7 @@ export default function HighlightsGrid({ clips, tapes, projectId }) {
                 <div className="mb-4 flex items-baseline gap-3">
                   <span className="text-2xl">{c.emoji}</span>
                   <h3 className="font-display text-3xl uppercase">{c.label}</h3>
-                  {tape && <span className="label-xs text-ink/50">· {tape.clip_count} clips</span>}
+                  {tape && <span className="label-xs text-paper/50">· {tape.clip_count} clips</span>}
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {list.map((clip, i) => (
@@ -68,7 +68,7 @@ export default function HighlightsGrid({ clips, tapes, projectId }) {
           })}
         </div>
       ) : (
-        <div className="mt-8 border-2 border-ink p-10 text-center sm:p-16">
+        <div className="mt-8 border-2 border-white/15 p-10 text-center sm:p-16">
           <p className="display-xl text-5xl sm:text-7xl">No</p>
           <p className="display-xl text-5xl sm:text-7xl">highlights</p>
           <p className="display-xl text-5xl text-flame sm:text-7xl">yet.</p>

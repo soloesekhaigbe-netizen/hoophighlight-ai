@@ -6,44 +6,44 @@
 
 @layer base {
   :root {
-    /* Editorial palette — light "paper" is the default surface */
-    --background: 40 41% 94%;
-    --foreground: 0 0% 7%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
+    /* Midnight athletic — near-black charcoal with flame-orange accents */
+    --background: 0 0% 6%;
+    --foreground: 40 25% 92%;
+    --card: 0 0% 9%;
+    --card-foreground: 40 25% 92%;
+    --popover: 0 0% 9%;
+    --popover-foreground: 40 25% 92%;
     --primary: 16 100% 54%;
-    --primary-foreground: 40 41% 94%;
-    --secondary: 40 30% 88%;
-    --secondary-foreground: 0 0% 7%;
-    --muted: 40 30% 88%;
-    --muted-foreground: 0 0% 38%;
-    --accent: 45 92% 58%;
-    --accent-foreground: 0 0% 7%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 14%;
+    --secondary-foreground: 40 25% 92%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 62%;
+    --accent: 38 95% 56%;
+    --accent-foreground: 0 0% 6%;
     --destructive: 1 74% 59%;
-    --destructive-foreground: 40 41% 94%;
-    --border: 0 0% 86%;
-    --input: 0 0% 86%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
     --ring: 16 100% 54%;
     --chart-1: 16 100% 54%;
     --chart-2: 145 39% 53%;
-    --chart-3: 45 92% 58%;
+    --chart-3: 38 95% 56%;
     --chart-4: 350 45% 72%;
-    --chart-5: 0 0% 7%;
+    --chart-5: 40 25% 92%;
     --radius: 0.25rem;
     --font-display: 'Anton', 'Space Grotesk', ui-sans-serif, sans-serif;
     --font-heading: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
     --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    --sidebar-background: 0 0% 7%;
-    --sidebar-foreground: 40 41% 94%;
-    --sidebar-primary: 45 92% 58%;
-    --sidebar-primary-foreground: 0 0% 7%;
-    --sidebar-accent: 0 0% 16%;
-    --sidebar-accent-foreground: 40 41% 94%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 45 92% 58%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 40 25% 92%;
+    --sidebar-primary: 16 100% 54%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 14%;
+    --sidebar-accent-foreground: 40 25% 92%;
+    --sidebar-border: 0 0% 18%;
+    --sidebar-ring: 16 100% 54%;
   }
 }
 
@@ -55,7 +55,7 @@
   body {
     @apply bg-background text-foreground font-body antialiased;
   }
-  ::selection { background: #111; color: #F7C948; }
+  ::selection { background: #FF5A1F; color: #fff; }
 }
 
 @layer utilities {

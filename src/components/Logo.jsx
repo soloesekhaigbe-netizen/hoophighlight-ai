@@ -22,7 +22,7 @@ export function Wordmark({ className = "", color = "text-ink" }) {
   );
 }
 
-export default function Logo({ tone = "sun", showWord = true, color = "text-ink", className = "", markClass = "h-9 w-9" }) {
+export default function Logo({ tone = "sun", showWord = true, color = "text-paper", className = "", markClass = "h-9 w-9" }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <Monogram tone={tone} className={markClass} />

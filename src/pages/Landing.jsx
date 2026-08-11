@@ -33,7 +33,7 @@ export default function Landing() {
 
   return (
     <PageShell items={items} brandTo="/" footer="Be the next player.">
-      {/* Hero — ink black */}
+      {/* Hero */}
       <section className="relative bg-ink text-paper">
         <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 py-16 sm:py-24 lg:grid-cols-12">
           <div className="lg:col-span-7">
@@ -54,7 +54,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="lg:col-span-5">
-            <div className="relative aspect-[3/4] w-full overflow-hidden border border-paper/15 bg-paper">
+            <div className="relative aspect-[3/4] w-full overflow-hidden border border-white/15 bg-ink-soft">
               <Image src="https://media.base44.com/images/public/6a7a0f20d7d4a7173f11b298/1f2620751_generated_image.png" fittingType="fill" className="h-full w-full" />
               <div className="absolute bottom-3 left-3 label-xs bg-ink/80 px-2 py-1 text-sun">No. 23 / Editorial</div>
             </div>
@@ -71,48 +71,48 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features — paper, editorial index */}
-      <section id="features" className="bg-paper">
+      {/* Features */}
+      <section id="features" className="bg-ink-soft text-paper">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
-          <div className="flex items-end justify-between gap-6 border-b border-ink/15 pb-6">
+          <div className="flex items-end justify-between gap-6 border-b border-white/10 pb-6">
             <h2 className="display-xl text-5xl sm:text-7xl">Everything<br />you need.</h2>
-            <span className="label-xs hidden text-ink/50 sm:block">Index 01—05</span>
+            <span className="label-xs hidden text-paper/50 sm:block">Index 01—05</span>
           </div>
-          <ul className="mt-2 divide-y divide-ink/10">
+          <ul className="mt-2 divide-y divide-white/10">
             {FEATURES.map((f) => (
               <li key={f.n} className="group grid gap-4 py-7 sm:grid-cols-12 sm:items-baseline">
                 <span className="font-display text-3xl text-flame sm:col-span-2">{f.n}</span>
                 <div className="sm:col-span-4">
                   <div className="flex items-center gap-3">
-                    <f.icon className="h-5 w-5 text-ink/60" />
+                    <f.icon className="h-5 w-5 text-paper/60" />
                     <h3 className="font-display text-2xl uppercase sm:text-3xl">{f.title}</h3>
                   </div>
                 </div>
-                <p className="text-ink/70 sm:col-span-6">{f.body}</p>
+                <p className="text-paper/70 sm:col-span-6">{f.body}</p>
               </li>
             ))}
           </ul>
         </div>
       </section>
 
-      {/* How it works — rose */}
-      <section id="how" className="bg-rose text-ink">
+      {/* How it works */}
+      <section id="how" className="bg-ink text-paper">
         <div className="mx-auto max-w-6xl px-6 py-20 sm:py-28">
-          <p className="label-xs">How it works</p>
+          <p className="label-xs text-sun">How it works</p>
           <h2 className="mt-3 display-xl text-5xl sm:text-7xl">Three steps<br />to seen.</h2>
           <div className="mt-12 grid gap-8 md:grid-cols-3">
             {STEPS.map((s) => (
-              <div key={s.n} className="border-t-2 border-ink pt-5">
-                <p className="font-display text-6xl leading-none">{s.n}</p>
+              <div key={s.n} className="border-t-2 border-white/15 pt-5">
+                <p className="font-display text-6xl leading-none text-flame">{s.n}</p>
                 <h3 className="mt-5 font-display text-2xl uppercase">{s.title}</h3>
-                <p className="mt-2 text-ink/80">{s.body}</p>
+                <p className="mt-2 text-paper/80">{s.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Statement — ink */}
+      {/* Statement */}
       <section className="bg-ink text-paper">
         <div className="mx-auto max-w-6xl px-6 py-24 text-center sm:py-32">
           <p className="display-xl text-4xl leading-[0.9] sm:text-7xl">
@@ -128,7 +128,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer — ink */}
+      {/* Footer */}
       <footer className="bg-ink text-paper">
         <div className="mx-auto max-w-6xl px-6 py-16">
           <p className="font-display text-[22vw] leading-[0.8] sm:text-[12rem]">Prospect</p>

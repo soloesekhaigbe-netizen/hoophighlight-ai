@@ -28,10 +28,10 @@ export default function Portfolio() {
   if (error) {
     return (
       <PageShell items={[]} brandTo="/" footer="Be the next player.">
-        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center text-paper">
           <p className="font-display text-4xl uppercase">Not available</p>
-          <p className="text-sm text-ink/60">{error}</p>
-          <p className="text-xs text-ink/40">This portfolio may be private or the link is incorrect.</p>
+          <p className="text-sm text-paper/60">{error}</p>
+          <p className="text-xs text-paper/40">This portfolio may be private or the link is incorrect.</p>
         </div>
       </PageShell>
     );
@@ -85,14 +85,14 @@ export default function Portfolio() {
 
       {/* Featured highlight reel */}
       {featured && (
-        <section id="reel" className="scroll-mt-20 bg-paper">
+        <section id="reel" className="scroll-mt-20 bg-ink-soft text-paper">
           <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
-            <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
+            <div className="flex items-end justify-between gap-6 border-b-2 border-white/10 pb-4">
               <h2 className="display-xl text-5xl sm:text-7xl">Highlight<br />reel.</h2>
-              <span className="label-xs text-ink/50">{featured.clip_count} clips</span>
+              <span className="label-xs text-paper/50">{featured.clip_count} clips</span>
             </div>
             <button onClick={() => setReel(featured)}
-              className="group mt-8 flex w-full flex-col items-center justify-center gap-4 border-2 border-ink bg-ink py-16 text-paper transition hover:bg-ink-soft sm:py-24">
+              className="group mt-8 flex w-full flex-col items-center justify-center gap-4 border-2 border-white/15 bg-ink py-16 text-paper transition hover:bg-white/5 sm:py-24">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sun text-ink transition group-hover:scale-110">
                 <Play className="ml-1 h-7 w-7" />
               </span>
@@ -104,35 +104,35 @@ export default function Portfolio() {
       )}
 
       {/* Highlights */}
-      <section id="highlights" className="scroll-mt-20 bg-paper">
+      <section id="highlights" className="scroll-mt-20 bg-ink-soft text-paper">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <HighlightsGrid clips={data.clips} tapes={data.tapes} projectId={data.project.id} />
         </div>
       </section>
 
-      {/* Statistics — clean, on paper */}
-      <section id="stats" className="scroll-mt-20 bg-paper-deep">
+      {/* Statistics */}
+      <section id="stats" className="scroll-mt-20 bg-ink text-paper">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
-          <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
+          <div className="flex items-end justify-between gap-6 border-b-2 border-white/10 pb-4">
             <h2 className="display-xl text-5xl sm:text-7xl">By the<br />numbers.</h2>
-            <span className="label-xs">Season totals</span>
+            <span className="label-xs text-paper/60">Season totals</span>
           </div>
-          <div className="mt-8 grid gap-px bg-ink/10 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-px bg-white/10 sm:grid-cols-2 lg:grid-cols-4">
             {catCounts.map((c) => (
-              <div key={c.key} className="bg-paper-deep p-7">
+              <div key={c.key} className="bg-ink-soft p-7">
                 <span className="text-2xl">{c.emoji}</span>
                 <p className="mt-4 font-display text-6xl leading-none sm:text-7xl">{c.count}</p>
-                <p className="label-xs mt-2 text-ink/55">{c.label}</p>
+                <p className="label-xs mt-2 text-paper/55">{c.label}</p>
               </div>
             ))}
           </div>
-          <div className="mt-px grid gap-px bg-ink/10 sm:grid-cols-2">
-            <div className="bg-paper-deep p-7">
-              <p className="label-xs text-ink/55">Games</p>
+          <div className="mt-px grid gap-px bg-white/10 sm:grid-cols-2">
+            <div className="bg-ink-soft p-7">
+              <p className="label-xs text-paper/55">Games</p>
               <p className="mt-2 font-display text-6xl leading-none sm:text-7xl">{data.games.length}</p>
             </div>
-            <div className="bg-paper-deep p-7">
-              <p className="label-xs text-ink/55">Total highlights</p>
+            <div className="bg-ink-soft p-7">
+              <p className="label-xs text-paper/55">Total highlights</p>
               <p className="mt-2 font-display text-6xl leading-none sm:text-7xl">{data.clips.length}</p>
             </div>
           </div>
@@ -140,7 +140,7 @@ export default function Portfolio() {
       </section>
 
       {/* Games */}
-      <section id="games" className="scroll-mt-20 bg-paper">
+      <section id="games" className="scroll-mt-20 bg-ink-soft text-paper">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <PortfolioGameList games={data.games} />
         </div>
