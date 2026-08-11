@@ -82,6 +82,18 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
       {editing && (
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
           <div className="space-y-3">
+            <div>
+              <p className="text-[11px] tracking-[0.18em] text-slate-500">NAME</p>
+              <Input className="mt-1 border-white/10 bg-white/5" defaultValue={clip.description || ""}
+                placeholder="e.g. Crossover pull-up three"
+                onBlur={(e) => patch({ description: e.target.value })} />
+            </div>
+            <div>
+              <p className="text-[11px] tracking-[0.18em] text-slate-500">PLAY TYPE</p>
+              <Input className="mt-1 border-white/10 bg-white/5" defaultValue={clip.play_type || ""}
+                placeholder="e.g. layup, assist, block"
+                onBlur={(e) => patch({ play_type: e.target.value })} />
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <p className="text-[11px] tracking-[0.18em] text-slate-500">START (S)</p>
