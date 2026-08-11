@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Loader2, Upload } from "lucide-react";
+import { AlertTriangle, Loader2, Upload, CheckCircle2, FileVideo } from "lucide-react";
 
 export default function AddGameDialog({ projectId, onDone, trigger }) {
   const [open, setOpen] = useState(false);
@@ -15,7 +15,30 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
   const [errors, setErrors] = useState([]);
   const [busy, setBusy] = useState(false);
   const [uploadFile, setUploadFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
+  // Background upload: kicks off the moment a file is picked, runs in parallel
+  // with the user filling in game details, so submit becomes near-instant.
+  const [uploadState, setUploadState] = useState(null); // null | 'uploading' | 'ready' | 'error'
+  const uploadPromiseRef = useRef(null);
+  const fileUrlRef = useRef(null);
+
+  const pickFile = (file) => {
+    setUploadFile(file);
+    setErrors([]);
+    if (!file) { uploadPromiseRef.current = null; fileUrlRef.current = null; setUploadState(null); return; }
+    setUploadState("uploading");
+    uploadPromiseRef.current = (async () => {
+      try {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        fileUrlRef.current = file_url;
+        setUploadState("ready");
+        return file_url;
+      } catch (e) {
+        setUploadState("error");
+        uploadPromiseRef.current = null;
+        throw e;
+      }
+    })();
+  };
 
   const start = async (fileUrl, linkList) => {
     const game = await base44.entities.Game.create({
@@ -46,10 +69,14 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
     try {
       if (type === "file") {
         if (!uploadFile) { setErrors([{ url: "", error: "Choose a video file to upload." }]); return; }
-        setUploading(true);
-        const { file_url } = await base44.integrations.Core.UploadFile({ file: uploadFile });
-        setUploading(false);
-        await start(file_url, null);
+        // Await the background upload if it's still running; otherwise reuse the result.
+        let fileUrl = fileUrlRef.current;
+        if (uploadPromiseRef.current) {
+          try { fileUrl = await uploadPromiseRef.current; }
+          catch (e) { setErrors([{ url: "", error: e?.message || "Upload failed. Please try again." }]); return; }
+        }
+        if (!fileUrl) { setErrors([{ url: "", error: "Upload failed. Please try again." }]); return; }
+        await start(fileUrl, null);
         return;
       }
       const list = urls.split("\n").map((u) => u.trim()).filter(Boolean);
@@ -59,12 +86,11 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
       setErrors([{ url: "", error: e?.message || "Something went wrong. Please try again." }]);
     } finally {
       setBusy(false);
-      setUploading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) { setUploadFile(null); setUploadState(null); uploadPromiseRef.current = null; fileUrlRef.current = null; setErrors([]); } }}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader><DialogTitle className="tracking-[0.16em]">ADD GAME</DialogTitle></DialogHeader>
@@ -116,17 +142,41 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
         {type === "file" ? (
           <div>
             <Label className="text-xs text-foreground/55">Upload game footage (.mp4 / .webm)</Label>
-            <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 squircle border border-dashed border-white/15 p-8 text-center hover:border-primary/50">
-              {uploading ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : <Upload className="h-6 w-6 text-foreground/55" />}
-              <span className="text-sm text-foreground/70">
-                {uploadFile ? uploadFile.name : "Click to choose a video file"}
-              </span>
-              <span className="text-[11px] text-foreground/45">
-                Uploaded footage is fully processed — real clip segments are extracted and played.
-              </span>
-              <input type="file" accept="video/*" className="hidden"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)} />
-            </label>
+            {uploadState === "uploading" || uploadState === "ready" ? (
+              <div className="mt-2 squircle border border-white/10 glass p-4">
+                <div className="flex items-center gap-3">
+                  {uploadState === "uploading"
+                    ? <Loader2 className="h-5 w-5 shrink-0 animate-spin text-primary" />
+                    : <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />}
+                  <FileVideo className="h-5 w-5 shrink-0 text-foreground/45" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-foreground/85">{uploadFile?.name}</p>
+                    <p className={`text-[11px] ${uploadState === "ready" ? "text-emerald-400" : "text-primary"}`}>
+                      {uploadState === "ready" ? "Uploaded — ready to process" : "Uploading in background…"}
+                    </p>
+                  </div>
+                  <button type="button" onClick={() => pickFile(null)}
+                    className="text-[11px] text-foreground/45 hover:text-rose-400">Remove</button>
+                </div>
+                <label className="mt-2 inline-block cursor-pointer text-[11px] font-semibold tracking-[0.14em] text-foreground/55 hover:text-primary">
+                  Choose a different file
+                  <input type="file" accept="video/*" className="hidden"
+                    onChange={(e) => pickFile(e.target.files?.[0] || null)} />
+                </label>
+              </div>
+            ) : (
+              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center gap-2 squircle border border-dashed border-white/15 p-8 text-center hover:border-primary/50">
+                {uploadState === "error" ? <AlertTriangle className="h-6 w-6 text-rose-400" /> : <Upload className="h-6 w-6 text-foreground/55" />}
+                <span className="text-sm text-foreground/70">
+                  {uploadState === "error" ? "Upload failed — try again" : "Click to choose a video file"}
+                </span>
+                <span className="text-[11px] text-foreground/45">
+                  Upload starts instantly — fill in the details while it uploads.
+                </span>
+                <input type="file" accept="video/*" className="hidden"
+                  onChange={(e) => pickFile(e.target.files?.[0] || null)} />
+              </label>
+            )}
           </div>
         ) : (
           <div>
@@ -150,9 +200,9 @@ export default function AddGameDialog({ projectId, onDone, trigger }) {
           </div>
         )}
 
-        <Button onClick={submit} disabled={busy || uploading}
+        <Button onClick={submit} disabled={busy || (type === "file" && uploadState === "uploading" && !uploadFile)}
           className="w-full">
-          {busy || uploading ? "PROCESSING..." : "START PROCESSING"}
+          {busy ? "PROCESSING..." : type === "file" && uploadState === "uploading" ? "UPLOADING… (then process)" : "START PROCESSING"}
         </Button>
       </DialogContent>
     </Dialog>
