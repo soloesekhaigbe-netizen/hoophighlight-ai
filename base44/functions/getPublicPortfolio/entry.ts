@@ -31,6 +31,7 @@ export default async function (req) {
         return {
           id: c.id, category: c.category, play_type: c.play_type, description: c.description,
           start_seconds: c.start_seconds, end_seconds: c.end_seconds, game_id: c.game_id,
+          video_source_id: c.video_source_id,
           clip_url: c.clip_url || '',
           source_type: src?.source_type || (c.clip_url ? 'file' : ''),
           external_id: src?.external_id || '',
@@ -40,7 +41,11 @@ export default async function (req) {
       .filter((c) => c.clip_url || c.source_type === 'youtube' || c.source_type === 'veo');
 
     const publicTapes = tapes.filter((t) => t.status === 'ready').map((t) => ({
-      id: t.id, category: t.category, title: t.title, clip_count: t.clip_count, duration_seconds: t.duration_seconds, clip_ids: t.clip_ids
+      id: t.id, category: t.category, title: t.title, clip_count: t.clip_count,
+      duration_seconds: t.duration_seconds, clip_ids: t.clip_ids || [],
+      is_featured: !!t.is_featured, version_label: t.version_label,
+      intro_text: t.intro_text || '', outro_text: t.outro_text || '',
+      include_fields: t.include_fields || {}
     }));
 
     const player_id = project.owner_user_id || project.created_by_id || '';

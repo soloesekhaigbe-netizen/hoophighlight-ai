@@ -37,7 +37,7 @@ export default function Dashboard() {
         try {
           await base44.integrations.Core.SendEmail({
             to: me?.email, subject: "Welcome to PROSPECT",
-            body: `Hi ${name},\n\nYour PROSPECT portfolio has been created. Complete your profile, upload a game, and the AI will detect your buckets, rebounds, blocks and shooting — then build your highlight tapes automatically.\n\nOpen your dashboard to get started.`,
+            body: `Hi ${name},\n\nYour PROSPECT portfolio has been created. Complete your profile, upload a game, and we'll detect your buckets, rebounds, blocks and shooting — then build your highlight tapes automatically.\n\nOpen your dashboard to get started.`,
           });
         } catch (_e) { /* email is best-effort */ }
       } catch (_e) { project = null; }

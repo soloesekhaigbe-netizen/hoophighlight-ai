@@ -35,7 +35,7 @@ export default function GamesTab({ project, games, sources, clips, reload }) {
 
       {games.length === 0 && (
         <div className="rounded-3xl border border-dashed border-white/10 p-14 text-center text-sm text-slate-400">
-          No games yet. Upload footage or add a Veo/YouTube link to start automatic AI analysis.
+          No games yet. Upload footage or add a Veo/YouTube link to start automatic analysis.
         </div>
       )}
 

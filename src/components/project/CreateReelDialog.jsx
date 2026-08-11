@@ -12,7 +12,7 @@ const STYLES = ["Professional Recruiting", "Fast/Punchy", "Clean", "Cinematic", 
 const SELECTIONS = [
   { key: "best", label: "Best clips" },
   { key: "all", label: "All clips" },
-  { key: "highest", label: "Highest AI scores" },
+  { key: "highest", label: "Highest scores" },
   { key: "manual", label: "Manual selection" },
 ];
 const INCLUDE_OPTIONS = [
@@ -61,7 +61,7 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
         clip_ids: selection === "manual" ? manualClipIds : undefined,
         settings: { reel_length: length, selection_mode: selection, style, include_fields: includes },
       });
-      toast({ title: "Highlight reel created", description: `${res.data?.clip_count || 0} clips sequenced by AI.` });
+      toast({ title: "Highlight reel created", description: `${res.data?.clip_count || 0} clips sequenced and ranked.` });
       setOpen(false);
       setSelectedGames([]);
       setManualClipIds([]);
@@ -78,12 +78,12 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
       <DialogTrigger asChild>
         {trigger || (
           <Button className="h-11 bg-orange-500 px-7 font-semibold tracking-[0.18em] text-slate-950 hover:bg-orange-400">
-            <Sparkles className="mr-2 h-4 w-4" /> CREATE AI HIGHLIGHT REEL
+            <Sparkles className="mr-2 h-4 w-4" /> CREATE HIGHLIGHT REEL
           </Button>
         )}
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto border-white/10 bg-slate-950 text-slate-100">
-        <DialogHeader><DialogTitle className="tracking-[0.16em]">✨ CREATE AI HIGHLIGHT REEL</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="tracking-[0.16em]">✨ CREATE HIGHLIGHT REEL</DialogTitle></DialogHeader>
 
         {!playableGames.length ? (
           <p className="text-sm text-slate-400">No accepted clips yet. Upload a game and accept some clips first.</p>
@@ -166,7 +166,7 @@ export default function CreateReelDialog({ project, games, clips, reload, trigge
 
             <Button onClick={generate} disabled={busy} className="w-full bg-orange-500 font-semibold tracking-[0.18em] text-slate-950 hover:bg-orange-400">
               {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-              {busy ? "GENERATING…" : "GENERATE AI REEL"}
+              {busy ? "GENERATING…" : "GENERATE REEL"}
             </Button>
           </div>
         )}

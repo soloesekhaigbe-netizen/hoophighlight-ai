@@ -44,10 +44,10 @@ export default function ClipCard({ clip, source, game, project, reload, onMove }
         <span className={`text-[11px] font-semibold ${verdict.cls}`}>PLAYER {idConf}% · {verdict.text}</span>
         <span className={`text-[11px] font-semibold ${playConf.cls}`}>PLAY {clip.play_confidence ?? clip.confidence ?? 0}% · {playConf.text}</span>
         {clip.detection_source === "ai-vision" && (
-          <span className="text-[10px] tracking-[0.16em] text-slate-500">AI VISION</span>
+          <span className="text-[10px] tracking-[0.16em] text-slate-500">AUTO</span>
         )}
         {(clip.highlight_score || 0) > 0 && (
-          <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300">AI {clip.highlight_score}</span>
+          <span className="rounded-full bg-orange-500/15 px-2.5 py-1 text-[11px] font-semibold text-orange-300" title="Highlight score">★ {clip.highlight_score}</span>
         )}
         <div className="ml-auto flex items-center gap-1">
           <Button size="icon" variant="ghost" className={`h-8 w-8 ${clip.favourite ? "text-orange-400" : "text-slate-400 hover:text-orange-400"}`} onClick={() => patch({ favourite: !clip.favourite })}>

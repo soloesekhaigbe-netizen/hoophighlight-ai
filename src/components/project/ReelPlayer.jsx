@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { SkipForward } from "lucide-react";
+import SharePortfolioButton from "@/components/SharePortfolioButton";
 import ClipPlayer from "@/components/ClipPlayer";
 import { fmtTime } from "@/lib/categories";
 
@@ -33,8 +34,13 @@ export default function ReelPlayer({ open, onOpenChange, tape, clips, sources, g
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl border-white/10 bg-slate-950 p-0 text-slate-100">
         <div className="p-6">
-          <p className="text-[11px] tracking-[0.3em] text-orange-400">✨ AI HIGHLIGHT REEL</p>
-          <h3 className="mt-1 font-heading text-2xl font-semibold">{tape?.version_label || tape?.title || project?.player_name}</h3>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] tracking-[0.3em] text-orange-400">✨ HIGHLIGHT REEL</p>
+              <h3 className="mt-1 font-heading text-2xl font-semibold">{tape?.version_label || tape?.title || project?.player_name}</h3>
+            </div>
+            <SharePortfolioButton project={project} tone="light" label="Share" />
+          </div>
 
           <div className="mt-5">
             {index === -1 ? (

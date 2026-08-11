@@ -64,12 +64,12 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
 
   return (
     <div className="space-y-10">
-      {/* AI Highlight Reel — primary feature */}
+      {/* Highlight Reel — primary feature */}
       <div>
         <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-orange-500/30 bg-gradient-to-br from-orange-500/15 to-transparent p-6">
           <div>
-            <p className="font-heading text-lg font-semibold">✨ AI Highlight Reel</p>
-            <p className="text-sm text-slate-400">Pick one or more games — the AI ranks, sequences and builds a professional reel from your best clips.</p>
+            <p className="font-heading text-lg font-semibold">✨ Highlight Reel</p>
+            <p className="text-sm text-slate-400">Pick one or more games — ranks, sequences and builds a professional reel from your best clips.</p>
           </div>
           <CreateReelDialog project={project} games={games} clips={clips} reload={reload} />
         </div>
@@ -96,7 +96,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                         </button>
                       )}
                       <p className="text-xs text-slate-500">
-                        {t.clip_count} clips · {fmtTime(t.duration_seconds)} · {t.reel_length || "—"} · {t.style || "—"}{avgScore > 0 ? ` · avg AI ${avgScore}` : ""}
+                        {t.clip_count} clips · {fmtTime(t.duration_seconds)} · {t.reel_length || "—"} · {t.style || "—"}{avgScore > 0 ? ` · avg score ${avgScore}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-1">

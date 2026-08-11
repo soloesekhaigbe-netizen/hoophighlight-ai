@@ -8,7 +8,6 @@ import GamesTab from "@/components/project/GamesTab";
 import ClipsTab from "@/components/project/ClipsTab";
 import ExportsTab from "@/components/project/ExportsTab";
 import PortfolioTab from "@/components/project/PortfolioTab";
-import CoachOutreachTab from "@/components/project/CoachOutreachTab";
 import InquiriesTab from "@/components/project/InquiriesTab";
 import AnalyticsTab from "@/components/project/AnalyticsTab";
 import { ACTIVE_STATUSES } from "@/lib/categories";
@@ -62,7 +61,7 @@ export default function ProjectPage() {
   const tabList = [
     ["overview", "Overview"], ["games", "Games"], ["clips", "Clips"],
     ["exports", "Exports"], ["portfolio", "Portfolio"],
-    ["outreach", "Outreach"], ["inquiries", "Inquiries"], ["analytics", "Analytics"],
+    ["inquiries", "Inquiries"], ["analytics", "Analytics"],
   ];
 
   return (
@@ -109,7 +108,6 @@ export default function ProjectPage() {
             <TabsContent value="clips"><ClipsTab {...shared} /></TabsContent>
             <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
             <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
-            <TabsContent value="outreach"><CoachOutreachTab {...shared} /></TabsContent>
             <TabsContent value="inquiries"><InquiriesTab {...shared} /></TabsContent>
             <TabsContent value="analytics"><AnalyticsTab {...shared} /></TabsContent>
           </div>

@@ -6,8 +6,10 @@ import PortfolioHeader from "@/components/portfolio/PortfolioHeader";
 import HighlightsGrid from "@/components/portfolio/HighlightsGrid";
 import PortfolioGameList from "@/components/portfolio/PortfolioGameList";
 import ContactForm from "@/components/portfolio/ContactForm";
+import ReelPlayer from "@/components/project/ReelPlayer";
+import SharePortfolioButton from "@/components/SharePortfolioButton";
 import { CATEGORIES } from "@/lib/categories";
-import { Film, BarChart3, CalendarDays, Mail, User, Loader2 } from "lucide-react";
+import { Film, CalendarDays, Mail, User, Loader2, Play, BarChart3 } from "lucide-react";
 
 // Public recruiting portfolio. Anyone can view (no account). Data is served by
 // the getPublicPortfolio backend function, which only returns public projects.
@@ -15,6 +17,7 @@ export default function Portfolio() {
   const { id } = useParams();
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
+  const [reel, setReel] = useState(null);
 
   useEffect(() => {
     base44.functions.invoke("getPublicPortfolio", { project_id: id })
@@ -22,17 +25,9 @@ export default function Portfolio() {
       .catch((e) => setError(e.message || "Not available"));
   }, [id]);
 
-  const items = [
-    { to: "#overview", label: "Overview", icon: User },
-    { to: "#highlights", label: "Highlights", icon: Film },
-    { to: "#stats", label: "Statistics", icon: BarChart3 },
-    { to: "#games", label: "Games", icon: CalendarDays },
-    { to: "#contact", label: "Contact", icon: Mail },
-  ];
-
   if (error) {
     return (
-      <PageShell items={items} brandTo="/" footer="Be the next player.">
+      <PageShell items={[]} brandTo="/" footer="Be the next player.">
         <div className="flex min-h-[70vh] flex-col items-center justify-center gap-3 px-6 text-center">
           <p className="font-display text-4xl uppercase">Not available</p>
           <p className="text-sm text-ink/60">{error}</p>
@@ -43,7 +38,7 @@ export default function Portfolio() {
   }
   if (!data) {
     return (
-      <PageShell items={items} brandTo="/" footer="Be the next player.">
+      <PageShell items={[]} brandTo="/" footer="Be the next player.">
         <div className="flex min-h-[70vh] items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-flame" />
         </div>
@@ -51,7 +46,25 @@ export default function Portfolio() {
     );
   }
 
+  const featured = data.tapes.find((t) => t.is_featured && t.category === "mix") || data.tapes.find((t) => t.category === "mix");
   const catCounts = CATEGORIES.map((c) => ({ ...c, count: data.clips.filter((x) => x.category === c.key).length }));
+
+  const items = [
+    { to: "#overview", label: "Overview", icon: User },
+    ...(featured ? [{ to: "#reel", label: "Reel", icon: Film }] : []),
+    { to: "#highlights", label: "Highlights", icon: Film },
+    { to: "#stats", label: "Statistics", icon: BarChart3 },
+    { to: "#games", label: "Games", icon: CalendarDays },
+    { to: "#contact", label: "Contact", icon: Mail },
+  ];
+
+  // ReelPlayer expects a sources array; derive it from the public clips.
+  const reelSources = data.clips.map((c) => ({
+    id: c.video_source_id || c.id,
+    source_type: c.source_type,
+    external_id: c.external_id,
+    file_url: c.clip_url,
+  }));
 
   return (
     <PageShell items={items} brandTo="/" footer="Be the next player.">
@@ -59,8 +72,36 @@ export default function Portfolio() {
       <section id="overview" className="scroll-mt-20 bg-ink text-paper">
         <div className="mx-auto max-w-6xl px-6 py-14 sm:py-20">
           <PortfolioHeader project={data.project} />
+          <div className="mt-8 flex flex-wrap gap-3">
+            <SharePortfolioButton project={data.project} label="Share portfolio" tone="light" />
+            {featured && (
+              <a href="#reel" className="inline-flex items-center gap-2 border border-paper/30 px-5 py-2.5 font-heading text-xs font-semibold uppercase tracking-[0.16em] text-paper transition hover:bg-paper hover:text-ink">
+                <Play className="h-4 w-4" /> Watch highlight reel
+              </a>
+            )}
+          </div>
         </div>
       </section>
+
+      {/* Featured highlight reel */}
+      {featured && (
+        <section id="reel" className="scroll-mt-20 bg-paper">
+          <div className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
+            <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
+              <h2 className="display-xl text-5xl sm:text-7xl">Highlight<br />reel.</h2>
+              <span className="label-xs text-ink/50">{featured.clip_count} clips</span>
+            </div>
+            <button onClick={() => setReel(featured)}
+              className="group mt-8 flex w-full flex-col items-center justify-center gap-4 border-2 border-ink bg-ink py-16 text-paper transition hover:bg-ink-soft sm:py-24">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-sun text-ink transition group-hover:scale-110">
+                <Play className="ml-1 h-7 w-7" />
+              </span>
+              <span className="font-display text-3xl uppercase sm:text-4xl">{featured.version_label || featured.title || "Highlight Reel"}</span>
+              <span className="label-xs text-paper/60">Tap to play · {featured.clip_count} clips</span>
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Highlights */}
       <section id="highlights" className="scroll-mt-20 bg-paper">
@@ -69,37 +110,37 @@ export default function Portfolio() {
         </div>
       </section>
 
-      {/* Statistics — oversized typography, real counts only */}
-      <section id="stats" className="scroll-mt-20 bg-sun text-ink">
+      {/* Statistics — clean, on paper */}
+      <section id="stats" className="scroll-mt-20 bg-paper-deep">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <div className="flex items-end justify-between gap-6 border-b-2 border-ink pb-4">
             <h2 className="display-xl text-5xl sm:text-7xl">By the<br />numbers.</h2>
             <span className="label-xs">Season totals</span>
           </div>
-          <div className="mt-6 grid gap-px bg-ink sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-px bg-ink/10 sm:grid-cols-2 lg:grid-cols-4">
             {catCounts.map((c) => (
-              <div key={c.key} className="bg-sun p-7">
+              <div key={c.key} className="bg-paper-deep p-7">
                 <span className="text-2xl">{c.emoji}</span>
-                <p className="mt-5 font-display text-7xl leading-none sm:text-8xl">{c.count}</p>
-                <p className="label-xs mt-2 text-ink/60">{c.label}</p>
+                <p className="mt-4 font-display text-6xl leading-none sm:text-7xl">{c.count}</p>
+                <p className="label-xs mt-2 text-ink/55">{c.label}</p>
               </div>
             ))}
           </div>
-          <div className="mt-px grid gap-px bg-ink sm:grid-cols-2">
-            <div className="bg-sun p-7">
-              <p className="label-xs text-ink/60">Games</p>
-              <p className="mt-2 font-display text-7xl leading-none sm:text-8xl">{data.games.length}</p>
+          <div className="mt-px grid gap-px bg-ink/10 sm:grid-cols-2">
+            <div className="bg-paper-deep p-7">
+              <p className="label-xs text-ink/55">Games</p>
+              <p className="mt-2 font-display text-6xl leading-none sm:text-7xl">{data.games.length}</p>
             </div>
-            <div className="bg-sun p-7">
-              <p className="label-xs text-ink/60">Total highlights</p>
-              <p className="mt-2 font-display text-7xl leading-none sm:text-8xl">{data.clips.length}</p>
+            <div className="bg-paper-deep p-7">
+              <p className="label-xs text-ink/55">Total highlights</p>
+              <p className="mt-2 font-display text-6xl leading-none sm:text-7xl">{data.clips.length}</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Games */}
-      <section id="games" className="scroll-mt-20 bg-rose text-ink">
+      <section id="games" className="scroll-mt-20 bg-paper">
         <div className="mx-auto max-w-6xl px-6 py-16 sm:py-24">
           <PortfolioGameList games={data.games} />
         </div>
@@ -122,6 +163,11 @@ export default function Portfolio() {
           </div>
         </div>
       </footer>
+
+      {reel && (
+        <ReelPlayer open={!!reel} onOpenChange={() => setReel(null)} tape={reel}
+          clips={data.clips} sources={reelSources} games={data.games} project={data.project} />
+      )}
     </PageShell>
   );
 }

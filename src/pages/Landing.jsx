@@ -7,7 +7,7 @@ import PageShell from "@/components/nav/PageShell";
 import { ArrowRight, Sparkles, Map, LogIn, Scissors, BarChart3, Film, Share2, Mail } from "lucide-react";
 
 const FEATURES = [
-  { n: "01", icon: Scissors, title: "AI highlight detection", body: "Drop game footage. The vision engine finds your buckets, rebounds, blocks and shots — automatically." },
+  { n: "01", icon: Scissors, title: "Highlight detection", body: "Drop game footage. The vision engine finds your buckets, rebounds, blocks and shots — automatically." },
   { n: "02", icon: Film, title: "Game history", body: "Every fixture logged with opponents and dates. Your season, archived like a magazine spread." },
   { n: "03", icon: BarChart3, title: "Statistics", body: "Category breakdowns and clip counts rendered as oversized editorial typography, not tiny cards." },
   { n: "04", icon: Share2, title: "Shareable portfolio", body: "One link. Mobile-first, fast, built to send to any coach, scout, academy or programme." },
@@ -16,7 +16,7 @@ const FEATURES = [
 
 const STEPS = [
   { n: "01", title: "Build your profile", body: "Identity, measurements, academics and a photo. We track what's missing." },
-  { n: "02", title: "Drop your footage", body: "Upload a game file or paste a link. The AI detects your plays." },
+  { n: "02", title: "Drop your footage", body: "Upload a game file or paste a link. Your plays are detected automatically." },
   { n: "03", title: "Share your link", body: "Send it to coaches. They watch your highlights and contact you in one tap." },
 ];
 
@@ -42,7 +42,7 @@ export default function Landing() {
               Be the<br />next<br />player.
             </h1>
             <p className="mt-7 max-w-md text-base text-paper/70 sm:text-lg">
-              PROSPECT turns your game footage into a professional, shareable portfolio — AI-detected highlights, stats and game history, built for coaches and scouts.
+              PROSPECT turns your game footage into a professional, shareable portfolio — auto-detected highlights, stats and game history, built for coaches and scouts.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               {authed ? (
