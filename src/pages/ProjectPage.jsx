@@ -61,7 +61,6 @@ export default function ProjectPage() {
   const shared = { project, games, sources, clips, tapes, coaches, inquiries, events, reload: load };
   const tabList = [
     ["overview", "Overview"], ["games", "Games"], ["clips", "Clips"],
-    ...CATEGORIES.map((c) => [c.key, c.label]),
     ["exports", "Exports"], ["portfolio", "Portfolio"],
     ["outreach", "Outreach"], ["inquiries", "Inquiries"], ["analytics", "Analytics"],
   ];
@@ -108,11 +107,6 @@ export default function ProjectPage() {
             <TabsContent value="overview"><OverviewTab {...shared} /></TabsContent>
             <TabsContent value="games"><GamesTab {...shared} /></TabsContent>
             <TabsContent value="clips"><ClipsTab {...shared} /></TabsContent>
-            {CATEGORIES.map((c) => (
-              <TabsContent key={c.key} value={c.key}>
-                <ClipsTab {...shared} lockedCategory={c.key} />
-              </TabsContent>
-            ))}
             <TabsContent value="exports"><ExportsTab {...shared} /></TabsContent>
             <TabsContent value="portfolio"><PortfolioTab {...shared} /></TabsContent>
             <TabsContent value="outreach"><CoachOutreachTab {...shared} /></TabsContent>
