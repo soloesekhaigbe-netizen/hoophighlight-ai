@@ -40,25 +40,34 @@ export default function SiteNav({ items, brandTo = "/", footer, actions }) {
   return (
     <>
       {/* Desktop / tablet floating dock */}
-      <aside className="fixed left-4 top-4 bottom-4 z-30 hidden w-[64px] flex-col items-center justify-between glass-strong squircle py-5 md:flex">
-        <Link to={brandTo} aria-label="Prospect home" className="mt-1">
+      <aside className="fixed left-4 top-4 bottom-4 z-30 hidden w-[64px] flex-col items-center glass-strong squircle py-5 md:flex">
+        <Link to={brandTo} aria-label="Prospect home" className="mb-2 shrink-0">
           <Monogram tone="sun" className="h-10 w-10" />
         </Link>
 
-        <nav className="flex flex-col items-center gap-2">
-          {items.slice(0, 5).map((n) => {
+        <nav className="flex flex-1 flex-col items-center gap-2 overflow-y-auto no-scrollbar py-2">
+          {items.map((n) => {
             const active = isActive(n);
             return (
               <Link key={n.to} to={n.to} aria-label={n.label}
                 title={n.label}
-                className={`flex h-11 w-11 items-center justify-center rounded-[0.9rem] transition-all duration-200 ${active ? "bg-gradient-to-b from-[#FF7A3E] to-[#FF5A1F] text-primary-foreground shadow-[0_6px_20px_-8px_rgba(255,90,31,0.7)]" : "text-foreground/55 hover:bg-white/10 hover:text-foreground"}`}>
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[0.9rem] transition-all duration-200 ${active ? "bg-gradient-to-b from-[#FF7A3E] to-[#FF5A1F] text-primary-foreground shadow-[0_6px_20px_-8px_rgba(255,90,31,0.7)]" : "text-foreground/55 hover:bg-white/10 hover:text-foreground"}`}>
                 {n.icon ? <n.icon className="h-5 w-5" /> : null}
               </Link>
             );
           })}
         </nav>
 
-        <MenuButton />
+        <div className="mt-2 flex shrink-0 flex-col items-center gap-2">
+          {actions?.map((a) => (
+            <button key={a.label} type="button" aria-label={a.label} title={a.label}
+              onClick={a.onClick}
+              className="flex h-11 w-11 items-center justify-center rounded-[0.9rem] text-foreground/55 transition-all duration-200 hover:bg-white/10 hover:text-foreground">
+              {a.icon ? <a.icon className="h-5 w-5" /> : null}
+            </button>
+          ))}
+          <MenuButton />
+        </div>
       </aside>
 
       {/* Mobile floating top bar — padded below the notch via safe-area-inset-top */}
