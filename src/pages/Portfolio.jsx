@@ -21,7 +21,7 @@ export default function Portfolio() {
   useEffect(() => {
     base44.functions.invoke("getPublicPortfolio", { project_id: id })
       .then((res) => setData(res.data))
-      .catch((e) => setError(e.message || "Not available"));
+      .catch((e) => setError(e?.response?.data?.error || e?.data?.error || e?.message || "Not available"));
   }, [id]);
 
   if (error) {

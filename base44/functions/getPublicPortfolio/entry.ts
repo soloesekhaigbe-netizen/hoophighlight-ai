@@ -7,20 +7,22 @@ export default async function (req) {
   try {
     const base44 = createClientFromRequest(req);
     const body = await req.json().catch(() => ({}));
-    const project_id = body.project_id || new URL(req.url).pathname.split('/').pop();
+    const project_id = (body.project_id || new URL(req.url).pathname.split('/').pop() || '').trim();
 
     let project = null;
-    try {
-      project = await base44.asServiceRole.entities.Project.get(project_id);
-    } catch (_e) { project = null; }
-    // Shared links may use the project's slug instead of its id — resolve it.
-    if (!project && project_id) {
+    if (project_id) {
       try {
-        const bySlug = await base44.asServiceRole.entities.Project.filter({ slug: project_id });
-        project = bySlug && bySlug.length ? bySlug[0] : null;
+        project = await base44.asServiceRole.entities.Project.get(project_id);
       } catch (_e) { project = null; }
+      // Shared links may use the project's slug instead of its id — resolve it.
+      if (!project) {
+        try {
+          const bySlug = await base44.asServiceRole.entities.Project.filter({ slug: project_id });
+          project = bySlug && bySlug.length ? bySlug[0] : null;
+        } catch (_e) { project = null; }
+      }
     }
-    if (!project) return Response.json({ error: 'Portfolio not found' }, { status: 404 });
+    if (!project) return Response.json({ error: `Portfolio not found for "${project_id}"` }, { status: 404 });
     if (project.is_public === false) return Response.json({ error: 'This portfolio is private' }, { status: 403 });
 
     const [games, clips, tapes, sources] = await Promise.all([
