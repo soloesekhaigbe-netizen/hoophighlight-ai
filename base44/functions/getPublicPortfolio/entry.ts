@@ -25,11 +25,13 @@ export default async function (req) {
     if (!project) return Response.json({ error: `Portfolio not found for "${project_id}"` }, { status: 404 });
     if (project.is_public === false) return Response.json({ error: 'This portfolio is private' }, { status: 403 });
 
+    // Use the resolved project's real id (not the incoming slug) for related data.
+    const pid = project.id;
     const [games, clips, tapes, sources] = await Promise.all([
-      base44.asServiceRole.entities.Game.filter({ project_id }),
-      base44.asServiceRole.entities.Clip.filter({ project_id }),
-      base44.asServiceRole.entities.HighlightTape.filter({ project_id }),
-      base44.asServiceRole.entities.VideoSource.filter({ project_id })
+      base44.asServiceRole.entities.Game.filter({ project_id: pid }),
+      base44.asServiceRole.entities.Clip.filter({ project_id: pid }),
+      base44.asServiceRole.entities.HighlightTape.filter({ project_id: pid }),
+      base44.asServiceRole.entities.VideoSource.filter({ project_id: pid })
     ]);
     const sourceById = Object.fromEntries(sources.map((s) => [s.id, s]));
 
@@ -60,7 +62,7 @@ export default async function (req) {
     const player_id = project.owner_user_id || project.created_by_id || '';
     try {
       await base44.asServiceRole.entities.PortfolioEvent.create({
-        project_id, player_id, event_type: 'portfolio_view', visitor_hash: ''
+        project_id: pid, player_id, event_type: 'portfolio_view', visitor_hash: ''
       });
     } catch (_e) { /* best-effort */ }
 

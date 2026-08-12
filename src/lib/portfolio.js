@@ -29,7 +29,10 @@ export function slugify(s = "") {
 }
 
 export function portfolioLink(project) {
-  const id = project?.slug || project?.id;
+  // Use the stable project id so the link resolves regardless of which
+  // function version the viewer's client is pinned to (slug lookup requires
+  // the latest function, which may not have propagated yet).
+  const id = project?.id || project?.slug;
   return `${window.location.origin}/portfolio/${id}`;
 }
 
