@@ -55,119 +55,125 @@ export default function OverviewTab({ project, games, sources, clips, reload }) 
   };
 
   const threshold = project.identity_threshold ?? 90;
+  const completion = profileCompletion(project);
+  const missing = completionMissing(project);
+  const processingCount = sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).length;
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.1fr_1fr]">
-      <div className="space-y-6">
-        <div className="glass-tint squircle p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-medium">Profile completion — {profileCompletion(project)}%</p>
-            <p className="text-xs text-slate-400">{completionMissing(project).length} field(s) missing</p>
-          </div>
-          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-orange-500" style={{ width: `${profileCompletion(project)}%` }} />
-          </div>
+    <div className="space-y-6">
+      {/* Completion + summary strip */}
+      <div className="glass squircle-lg p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="label-xs text-primary">Profile completion</p>
+          <p className="label-xs text-foreground/45">{completion}% · {missing.length} missing</p>
         </div>
-        <div className="grid gap-4 sm:grid-cols-4">
-          {[["GAMES", games.length], ["VIDEOS", sources.length],
-            ["PROCESSING", sources.filter((s) => ACTIVE_STATUSES.includes(s.status)).length],
-            ["CLIPS", clips.length]].map(([l, v]) => (
-            <div key={l} className="glass squircle p-5">
-              <p className="text-3xl font-semibold">{v}</p>
-              <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-500">{l}</p>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent transition-all duration-500" style={{ width: `${completion}%` }} />
+        </div>
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[["Games", games.length], ["Videos", sources.length], ["Processing", processingCount], ["Clips", clips.length]].map(([l, v]) => (
+            <div key={l} className="rounded-[0.9rem] bg-white/[0.04] p-4">
+              <p className="font-display text-3xl leading-none">{v}</p>
+              <p className="mt-2 label-xs text-foreground/45">{l}</p>
             </div>
           ))}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-4">
-          {CATEGORIES.map((c) => (
-            <div key={c.key} className={`glass squircle p-5 ${c.bg}`}>
-              <p className="text-2xl">{c.emoji}</p>
-              <p className={`mt-3 text-2xl font-semibold ${c.accent}`}>{clips.filter((x) => x.category === c.key).length}</p>
-              <p className="mt-1 text-[10px] tracking-[0.2em] text-slate-400">{c.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="glass squircle-lg p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">TAPE BRANDING</p>
-          <div className="mt-4 space-y-4">
-            {[["intro_enabled", "Intro screen"], ["outro_enabled", "Outro screen"]].map(([k, label]) => (
-              <div key={k} className="flex items-center justify-between">
-                <span className="text-sm">{label}</span>
-                <Switch checked={project[k] !== false} onCheckedChange={(v) => patch({ [k]: v })} />
-              </div>
-            ))}
-            <div>
-              <Label className="text-xs text-slate-400">Outro text</Label>
-              <Input className="mt-1 border-white/10 bg-white/5" defaultValue={project.outro_text || ""}
-                placeholder="Contact: coach@school.edu" onBlur={(e) => patch({ outro_text: e.target.value })} />
-            </div>
-          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Player identification */}
         <div className="glass squircle-lg p-6">
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] tracking-[0.24em] text-slate-500">PLAYER IDENTIFICATION</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="label-xs text-foreground/50">Player identification</p>
             {project.calibrated ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-[10px] font-semibold tracking-[0.18em] text-emerald-300">
-                <BadgeCheck className="h-3.5 w-3.5" /> CALIBRATED
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-3 py-1 label-xs text-primary">
+                <BadgeCheck className="h-3.5 w-3.5" /> Calibrated
               </span>
             ) : (
               <PlayerCalibration project={project} sources={sources} reload={reload}
-                trigger={<Button size="sm" className="bg-orange-500 text-slate-950 hover:bg-orange-400"><Crosshair className="mr-1.5 h-3.5 w-3.5" /> Calibrate player</Button>} />
+                trigger={<Button size="sm"><Crosshair className="mr-1.5 h-3.5 w-3.5" /> Calibrate</Button>} />
             )}
           </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {FIELDS.map(([k, label]) => (
               <div key={k}>
-                <Label className="text-xs text-slate-400">{label}</Label>
-                <Input className="mt-1 border-white/10 bg-white/5" defaultValue={project[k] || ""}
+                <Label className="label-xs text-foreground/50">{label}</Label>
+                <Input className="mt-1.5" defaultValue={project[k] || ""}
                   onBlur={(e) => patch({ [k]: e.target.value })} />
               </div>
             ))}
             <div className="sm:col-span-2">
-              <Label className="text-xs text-slate-400">Appearance notes</Label>
-              <Textarea rows={2} className="mt-1 border-white/10 bg-white/5" defaultValue={project.appearance_notes || ""}
+              <Label className="label-xs text-foreground/50">Appearance notes</Label>
+              <Textarea rows={2} className="mt-1.5" defaultValue={project.appearance_notes || ""}
                 onBlur={(e) => patch({ appearance_notes: e.target.value })} />
             </div>
           </div>
         </div>
 
+        {/* Reference photos */}
         <div className="glass squircle-lg p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">REFERENCE PHOTOS</p>
-          <div className="mt-4 grid grid-cols-4 gap-3">
+          <p className="label-xs text-foreground/50">Reference photos</p>
+          <div className="mt-5 grid grid-cols-3 gap-3 sm:grid-cols-4">
             {photos.map((url, i) => (
-              <div key={i} className="group relative aspect-square overflow-hidden rounded-xl border border-white/10">
+              <div key={i} className="group relative aspect-square overflow-hidden rounded-[0.9rem] border border-white/10">
                 <Image src={url} alt={`ref ${i + 1}`} className="h-full w-full object-cover" />
                 <button onClick={() => removePhoto(i)}
-                  className="absolute right-1 top-1 rounded-md bg-black/70 p-1 text-rose-300 opacity-0 transition group-hover:opacity-100">
+                  className="absolute right-1.5 top-1.5 rounded-md bg-background/70 p-1.5 text-destructive opacity-0 transition group-hover:opacity-100">
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
               </div>
             ))}
-            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-white/15 text-slate-400 hover:border-orange-500/50 hover:text-orange-300">
+            <label className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-[0.9rem] border border-dashed border-white/15 text-foreground/45 transition hover:border-primary/50 hover:text-primary">
               {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Upload className="h-5 w-5" />}
-              <span className="text-[10px] tracking-widest">{uploading ? "…" : "ADD"}</span>
+              <span className="label-xs">{uploading ? "…" : "Add"}</span>
               <input type="file" accept="image/*" multiple className="hidden"
                 onChange={(e) => addPhotos(Array.from(e.target.files))} />
             </label>
           </div>
         </div>
 
+        {/* Category breakdown */}
         <div className="glass squircle-lg p-6">
-          <p className="text-[11px] tracking-[0.24em] text-slate-500">AUTO-ACCEPT THRESHOLD</p>
+          <p className="label-xs text-foreground/50">Highlight categories</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {CATEGORIES.map((c) => (
+              <div key={c.key} className="rounded-[0.9rem] bg-white/[0.04] p-4">
+                <p className="text-2xl">{c.emoji}</p>
+                <p className="mt-3 font-display text-3xl leading-none text-primary">{clips.filter((x) => x.category === c.key).length}</p>
+                <p className="mt-2 label-xs text-foreground/45">{c.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Threshold + branding */}
+        <div className="glass squircle-lg p-6">
+          <p className="label-xs text-foreground/50">Auto-accept threshold</p>
           <div className="mt-4 flex items-center gap-4">
             <Slider value={[threshold]} min={50} max={99} step={1} onValueChange={(v) => patch({ identity_threshold: v[0] })}
               className="flex-1" />
-            <span className="w-14 text-right text-lg font-semibold text-orange-400">{threshold}%</span>
+            <span className="w-14 text-right font-display text-2xl text-primary">{threshold}%</span>
           </div>
-          <p className="mt-3 text-xs text-slate-400">
-            Clips with player identity confidence at or above this are auto-accepted. {identityVerdict(threshold - 1, threshold).text} at {threshold - 1}%.
+          <p className="mt-3 text-xs text-foreground/55">
+            Clips with identity confidence at or above this are auto-accepted. {identityVerdict(threshold - 1, threshold).text} at {threshold - 1}%.
           </p>
+
+          <div className="my-6 h-px bg-white/10" />
+
+          <p className="label-xs text-foreground/50">Tape branding</p>
+          <div className="mt-4 space-y-4">
+            {[["intro_enabled", "Intro screen"], ["outro_enabled", "Outro screen"]].map(([k, label]) => (
+              <div key={k} className="flex items-center justify-between">
+                <span className="text-sm text-foreground/80">{label}</span>
+                <Switch checked={project[k] !== false} onCheckedChange={(v) => patch({ [k]: v })} />
+              </div>
+            ))}
+            <div>
+              <Label className="label-xs text-foreground/50">Outro text</Label>
+              <Input className="mt-1.5" defaultValue={project.outro_text || ""}
+                placeholder="Contact: coach@school.edu" onBlur={(e) => patch({ outro_text: e.target.value })} />
+            </div>
+          </div>
         </div>
       </div>
     </div>

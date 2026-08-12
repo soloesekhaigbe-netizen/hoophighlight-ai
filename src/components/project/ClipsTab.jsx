@@ -101,27 +101,35 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
     <div className="space-y-6">
       <ClipExtractionRunner clips={clips} sources={sources} reload={reload} />
 
-      {/* Search + filters */}
+      {/* Search + favourites */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="relative">
+        <div className="relative min-w-[14rem] flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-foreground/45" />
-          <Input className="w-56  pl-9" placeholder="Search clips…" value={search} onChange={(e) => setSearch(e.target.value)} />
+          <Input className="w-full pl-9" placeholder="Search clips…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
+        <Button size="sm" variant={favesOnly ? "default" : "outline"}
+          onClick={() => setFavesOnly((v) => !v)}>
+          <Star className={`mr-1.5 h-3.5 w-3.5 ${favesOnly ? "fill-current" : ""}`} /> Favourites
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <MobileSelect
           value={gameFilter} onValueChange={setGameFilter} placeholder="Game" title="Game"
-          triggerClassName="w-40"
+          triggerClassName="w-full"
           options={[{ value: "all", label: "All games" }, ...games.map((g) => ({ value: g.id, label: g.name }))]}
         />
         {!lockedCategory && (
           <MobileSelect
             value={catFilter} onValueChange={setCatFilter} title="Category"
-            triggerClassName="w-36"
+            triggerClassName="w-full"
             options={[{ value: "all", label: "All categories" }, ...CATEGORIES.map((c) => ({ value: c.key, label: `${c.emoji} ${c.label}` }))]}
           />
         )}
         <MobileSelect
           value={statusFilter} onValueChange={setStatusFilter} title="Status"
-          triggerClassName="w-32"
+          triggerClassName="w-full"
           options={[
             { value: "all", label: "All statuses" },
             { value: "pending", label: "Pending" },
@@ -131,7 +139,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
         />
         <MobileSelect
           value={reelFilter} onValueChange={setReelFilter} title="Reel"
-          triggerClassName="w-32"
+          triggerClassName="w-full"
           options={[
             { value: "all", label: "In any reel" },
             { value: "used", label: "Used in reel" },
@@ -140,7 +148,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
         />
         <MobileSelect
           value={sort} onValueChange={setSort} title="Sort"
-          triggerClassName="w-36"
+          triggerClassName="w-full"
           options={[
             { value: "order", label: "Manual order" },
             { value: "game", label: "By game" },
@@ -148,10 +156,6 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
             { value: "confidence", label: "By score" },
           ]}
         />
-        <Button size="sm" variant={favesOnly ? "default" : "outline"} className={favesOnly ? "" : ""}
-          onClick={() => setFavesOnly((v) => !v)}>
-          <Star className={`mr-1.5 h-3.5 w-3.5 ${favesOnly ? "fill-current" : ""}`} /> Favourites
-        </Button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
