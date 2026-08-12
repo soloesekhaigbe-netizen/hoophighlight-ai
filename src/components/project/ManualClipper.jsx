@@ -37,9 +37,12 @@ function loadYouTubeAPI() {
   return ytPromise;
 }
 
-// Shared row: live timestamp + Preview + Mark In / Mark Out.
-function MarkerBar({ current, duration, start, end, onPreview, onIn, onOut }) {
+// Shared row: live timestamp + Preview + Mark In / Mark Out / Mark Ns.
+// "Mark Ns" captures a clip of a customizable length from the current position.
+function MarkerBar({ current, duration, start, end, onPreview, onIn, onOut, onMarkSeconds }) {
   const valid = Number(end) > Number(start);
+  const [secs, setSecs] = useState(8);
+  const canMark = !!onMarkSeconds && Number(secs) > 0;
   return (
     <div className="mt-3 flex flex-wrap items-center gap-2">
       <span className="font-mono text-sm text-slate-300">{fmt(current)} / {fmt(duration)}</span>
@@ -47,7 +50,7 @@ function MarkerBar({ current, duration, start, end, onPreview, onIn, onOut }) {
       <span className={`font-mono text-xs ${valid ? "text-orange-300" : "text-slate-500"}`}>
         In {fmt(start)} → Out {fmt(end)}
       </span>
-      <div className="ml-auto flex flex-wrap gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         <Button size="sm" variant="outline" className="border-white/15 bg-transparent" disabled={!valid} onClick={onPreview}>
           <Play className="mr-1.5 h-3.5 w-3.5" /> Preview
         </Button>
@@ -57,6 +60,28 @@ function MarkerBar({ current, duration, start, end, onPreview, onIn, onOut }) {
         <Button size="sm" className="bg-orange-500 text-slate-950 hover:bg-orange-400" onClick={onOut}>
           <Flag className="mr-1.5 h-3.5 w-3.5" /> Mark Out
         </Button>
+        {onMarkSeconds && (
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              min="0.5"
+              step="0.5"
+              value={secs}
+              onChange={(e) => setSecs(e.target.value)}
+              className="h-9 w-16 border-white/15 bg-transparent text-center font-mono text-sm"
+              aria-label="Clip length in seconds"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-orange-500/50 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20"
+              disabled={!canMark}
+              onClick={() => onMarkSeconds(Number(secs) || 0)}
+            >
+              Mark {secs}s
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -93,7 +118,8 @@ function FileMarker({ src, start, end, setStart, setEnd }) {
           onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} />
       </div>
       <MarkerBar current={current} duration={duration} start={start} end={end}
-        onPreview={preview} onIn={() => setStart(t())} onOut={() => setEnd(t())} />
+        onPreview={preview} onIn={() => setStart(t())} onOut={() => setEnd(t())}
+        onMarkSeconds={(s) => { const cur = t(); setStart(cur); setEnd(Math.min(Number(duration) || cur + s, cur + s)); }} />
     </>
   );
 }
@@ -155,7 +181,8 @@ function YouTubeMarker({ videoId, start, end, setStart, setEnd }) {
         <div ref={hostRef} className="h-full w-full" />
       </div>
       <MarkerBar current={current} duration={duration} start={start} end={end}
-        onPreview={preview} onIn={() => setStart(t())} onOut={() => setEnd(t())} />
+        onPreview={preview} onIn={() => setStart(t())} onOut={() => setEnd(t())}
+        onMarkSeconds={(s) => { const cur = t(); setStart(cur); setEnd(Math.min(Number(duration) || cur + s, cur + s)); }} />
     </>
   );
 }
