@@ -59,7 +59,7 @@ export default function PortfolioTab({ project, games, clips, tapes, reload }) {
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Profile content editor */}
       <div className="glass squircle-lg p-6">
-        <p className="text-[11px] tracking-[0.24em] text-foreground/45">PORTFOLIO CONTENT</p>
+        <p className="label-xs text-foreground/50">PORTFOLIO CONTENT</p>
 
         {/* Profile photo */}
         <div className="mt-5 flex items-center gap-4">
@@ -91,10 +91,10 @@ export default function PortfolioTab({ project, games, clips, tapes, reload }) {
         {/* Bio */}
         <div className="mt-6">
           <Label className="text-xs text-foreground/55">About me</Label>
-          <Textarea rows={5} className="mt-1 border-white/10 bg-white/5" defaultValue={project.bio || ""}
+          <Textarea rows={5} className="mt-1" defaultValue={project.bio || ""}
             placeholder="A short bio for coaches — your style of play, strengths, goals…"
             onBlur={(e) => patch({ bio: e.target.value })} />
-          <p className="mt-1 text-[11px] text-foreground/45">Saved automatically when you click away.</p>
+          <p className="mt-1 text-xs text-foreground/45">Saved automatically when you click away.</p>
         </div>
 
         {/* Featured highlight reel */}
@@ -107,7 +107,7 @@ export default function PortfolioTab({ project, games, clips, tapes, reload }) {
           ) : (
             <div className="mt-2 flex items-center gap-2">
               <Select value={featured?.id || ""} onValueChange={setFeatured}>
-                <SelectTrigger className="border-white/10 bg-white/5"><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>None</SelectItem>
                   {reels.map((r) => (
@@ -117,14 +117,14 @@ export default function PortfolioTab({ project, games, clips, tapes, reload }) {
               </Select>
             </div>
           )}
-          <p className="mt-1 text-[11px] text-foreground/45">The featured reel plays first when a coach opens your link.</p>
+          <p className="mt-1 text-xs text-foreground/45">The featured reel plays first when a coach opens your link.</p>
         </div>
       </div>
 
       {/* Share + visibility */}
       <div className="space-y-6">
         <div className="glass squircle-lg p-6">
-          <p className="text-[11px] tracking-[0.24em] text-foreground/45">SHAREABLE PORTFOLIO</p>
+          <p className="label-xs text-foreground/50">SHAREABLE PORTFOLIO</p>
           <p className="mt-4 break-all squircle-sm border border-white/10 bg-black/30 px-4 py-3 font-mono text-xs text-foreground/70">{link}</p>
           <div className="mt-4 flex flex-wrap gap-3">
             <Button onClick={copy} className="">
@@ -152,7 +152,7 @@ export default function PortfolioTab({ project, games, clips, tapes, reload }) {
         </div>
 
         <div className="glass squircle-lg p-6">
-          <p className="text-[11px] tracking-[0.24em] text-foreground/45">COACHES SEE</p>
+          <p className="label-xs text-foreground/50">COACHES SEE</p>
           <ul className="mt-4 space-y-2 text-sm text-foreground/70">
             {[
               { icon: Star, t: "Profile picture & bio" },

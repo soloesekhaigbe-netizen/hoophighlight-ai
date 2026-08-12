@@ -119,7 +119,7 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                         <div className="flex items-center gap-2">
                           <Input autoFocus value={labelVal} onChange={(e) => setLabelVal(e.target.value)}
                             onBlur={() => saveLabel(t)} onKeyDown={(e) => e.key === "Enter" && saveLabel(t)}
-                            className="h-8 w-56 border-white/10 bg-white/5" placeholder="Version label" />
+                            className="h-8 w-56" placeholder="Version label" />
                         </div>
                       ) : (
                         <button className="group flex items-center gap-2" onClick={() => { setEditingLabel(t.id); setLabelVal(t.version_label || ""); }}>
@@ -196,8 +196,8 @@ export default function ExportsTab({ project, games, sources, clips, tapes, relo
                 <p className={`mt-4 font-heading text-2xl font-semibold tracking-[0.1em] ${c.accent}`}>{c.label}</p>
                 <p className="mt-1 text-sm text-foreground/55">{project.player_name} — {c.label}</p>
                 <div className="mt-5 flex gap-6 text-sm">
-                  <div><p className="text-2xl font-semibold">{list.length}</p><p className="text-[10px] tracking-[0.2em] text-foreground/45">CLIPS</p></div>
-                  <div><p className="text-2xl font-semibold">{fmtTime(duration)}</p><p className="text-[10px] tracking-[0.2em] text-foreground/45">RUNTIME</p></div>
+                  <div><p className="font-display text-2xl">{list.length}</p><p className="mt-1 label-xs text-foreground/45">Clips</p></div>
+                  <div><p className="font-display text-2xl">{fmtTime(duration)}</p><p className="mt-1 label-xs text-foreground/45">Runtime</p></div>
                 </div>
                 {tape?.error_message && (
                   <p className="mt-4 flex gap-2 squircle-sm border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-200">

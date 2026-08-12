@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Eye, Play, MousePointerClick, Mail } from "lucide-react";
 import { CATEGORIES } from "@/lib/categories";
 
-const BAR_BG = { buckets: "bg-orange-500", rebounds: "bg-sky-500", blocks: "bg-emerald-500", shooting: "bg-fuchsia-500" };
+const BAR_BG = { buckets: "bg-primary", rebounds: "bg-sky-500", blocks: "bg-emerald-500", shooting: "bg-fuchsia-500" };
 
 export default function AnalyticsTab({ events = [] }) {
   const counts = useMemo(() => {
@@ -19,7 +19,7 @@ export default function AnalyticsTab({ events = [] }) {
 
   const tiles = [
     ["Portfolio views", counts.portfolio_view, Eye, "text-sky-400"],
-    ["Highlight plays", counts.highlight_play, Play, "text-orange-400"],
+    ["Highlight plays", counts.highlight_play, Play, "text-primary"],
     ["Link clicks", counts.link_click, MousePointerClick, "text-fuchsia-400"],
     ["Coach contacts", counts.coach_contact, Mail, "text-emerald-400"],
   ];
@@ -33,16 +33,16 @@ export default function AnalyticsTab({ events = [] }) {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tiles.map(([label, value, Icon, cls]) => (
-          <div key={label} className="glass squircle p-5">
+          <div key={label} className="glass squircle p-6">
             <Icon className={`h-5 w-5 ${cls}`} />
-            <p className="mt-4 text-3xl font-semibold">{value}</p>
-            <p className="mt-1 text-[11px] tracking-[0.2em] text-foreground/45">{label.toUpperCase()}</p>
+            <p className="mt-4 font-display text-3xl leading-none">{value}</p>
+            <p className="mt-2 label-xs text-foreground/45">{label}</p>
           </div>
         ))}
       </div>
 
       <div className="glass squircle p-6">
-        <p className="text-[11px] tracking-[0.24em] text-foreground/45">HIGHLIGHT PLAYS BY CATEGORY</p>
+        <p className="label-xs text-foreground/50">Highlight plays by category</p>
         <div className="mt-4 space-y-3">
           {CATEGORIES.map((c) => {
             const n = byCategory[c.key] || 0;

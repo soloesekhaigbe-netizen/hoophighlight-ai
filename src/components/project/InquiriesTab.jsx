@@ -3,10 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Mail, Archive, CheckCheck, Eye } from "lucide-react";
 
 const STATUS_CLS = {
-  new: "bg-orange-500/15 text-orange-300",
+  new: "bg-primary/15 text-primary",
   read: "bg-sky-500/15 text-sky-300",
   replied: "bg-emerald-500/15 text-emerald-300",
-  archived: "bg-slate-500/15 text-foreground/55",
+  archived: "bg-muted text-foreground/55",
 };
 
 export default function InquiriesTab({ inquiries = [], reload }) {

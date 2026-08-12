@@ -100,24 +100,24 @@ export default function GamesTab({ project, games, sources, clips, tapes, reload
                   <CreateReelDialog project={project} games={games} clips={clips} reload={reload} presetGameIds={[game.id]}
                     trigger={<Button variant="ghost" size="sm" className="text-primary hover:text-primary"><Sparkles className="mr-1.5 h-3.5 w-3.5" />Reel</Button>} />
                 )}
-                <Button variant="ghost" size="sm" className="text-foreground/45 hover:text-rose-400" disabled={deletingId === game.id} onClick={() => removeGame(game)}>
+                <Button variant="ghost" size="sm" className="text-foreground/45 hover:text-destructive" disabled={deletingId === game.id} onClick={() => removeGame(game)}>
                   {deletingId === game.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                 </Button>
               </div>
             </div>
 
             <div className="mt-4 grid grid-cols-3 gap-3 text-center">
-              <div className="glass squircle-sm px-3 py-3">
+              <div className="rounded-[0.9rem] bg-white/[0.04] px-3 py-3 text-center">
                 <p className="font-display text-2xl">{gameClips.length}</p>
-                <p className="text-[10px] tracking-[0.2em] text-foreground/45">CLIPS</p>
+                <p className="mt-1 label-xs text-foreground/45">Clips</p>
               </div>
-              <div className="glass squircle-sm px-3 py-3">
+              <div className="rounded-[0.9rem] bg-white/[0.04] px-3 py-3 text-center">
                 <p className="font-display text-2xl">{gs.length}</p>
-                <p className="text-[10px] tracking-[0.2em] text-foreground/45">RECORDING{gs.length !== 1 ? "S" : ""}</p>
+                <p className="mt-1 label-xs text-foreground/45">Recording{gs.length !== 1 ? "s" : ""}</p>
               </div>
-              <div className="glass squircle-sm px-3 py-3">
+              <div className="rounded-[0.9rem] bg-white/[0.04] px-3 py-3 text-center">
                 <p className="font-display text-2xl">{fmtTime(highlightDur)}</p>
-                <p className="text-[10px] tracking-[0.2em] text-foreground/45">HIGHLIGHTS</p>
+                <p className="mt-1 label-xs text-foreground/45">Highlights</p>
               </div>
             </div>
 
@@ -144,7 +144,7 @@ export default function GamesTab({ project, games, sources, clips, tapes, reload
                     <Progress value={s.progress || 5} className="mt-3 h-1.5 bg-white/10" />
                   )}
                   {s.status === "error" && s.error_message && (
-                    <p className="mt-3 flex gap-2 squircle-sm border border-rose-500/25 bg-rose-500/10 p-3 text-xs text-rose-200">
+                    <p className="mt-3 flex gap-2 squircle-sm border border-destructive/25 bg-destructive/10 p-3 text-xs text-destructive">
                       <AlertTriangle className="h-4 w-4 shrink-0" />{s.error_message}
                     </p>
                   )}
