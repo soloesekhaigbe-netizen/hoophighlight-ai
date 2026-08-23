@@ -7,7 +7,8 @@ import ClipCard from "@/components/project/ClipCard";
 import ManualClipper from "@/components/project/ManualClipper";
 import ClipExtractionRunner from "@/components/project/ClipExtractionRunner";
 import { CATEGORIES } from "@/lib/categories";
-import { Trash2, Search, Star, Film } from "lucide-react";
+import { Trash2, Search, Star, Film, Download } from "lucide-react";
+import { downloadAllClips } from "@/lib/clipDownload";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function ClipsTab({ project, games, sources, clips, tapes, reload, lockedCategory }) {
@@ -20,6 +21,7 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
   const [reelFilter, setReelFilter] = useState("all");
   const [selected, setSelected] = useState({});
   const [deleting, setDeleting] = useState(false);
+  const [downloadingAll, setDownloadingAll] = useState(false);
   const { toast } = useToast();
 
   // Every clip id that appears in any mix reel.
@@ -78,6 +80,24 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
       reload();
     } catch (e) {
       toast({ title: "Could not update clips", description: e?.message, variant: "destructive" });
+    }
+  };
+
+  const downloadAll = async () => {
+    const ready = visible.filter((c) => c.clip_url && c.processing_status === "ready");
+    if (!ready.length) {
+      toast({ title: "No downloadable clips yet", description: "Extract the clips first." });
+      return;
+    }
+    if (downloadingAll) return;
+    setDownloadingAll(true);
+    try {
+      const { saved, total } = await downloadAllClips(ready);
+      toast({ title: `Downloading ${saved} of ${total} clip${total > 1 ? "s" : ""}`, description: "Each clip saves as a separate video file." });
+    } catch (e) {
+      toast({ title: "Download failed", description: e?.message, variant: "destructive" });
+    } finally {
+      setDownloadingAll(false);
     }
   };
 
@@ -171,6 +191,9 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
         )}
         <Button size="sm" variant="outline" className="" onClick={() => bulk("accepted")}>Accept all shown</Button>
         <Button size="sm" variant="outline" className="" onClick={() => bulk("rejected")}>Reject all shown</Button>
+        <Button size="sm" variant="outline" className="border-orange-500/40 text-orange-300 hover:bg-orange-500/10" onClick={downloadAll} disabled={downloadingAll}>
+          <Download className="mr-1.5 h-3.5 w-3.5" /> {downloadingAll ? "Preparing…" : "Download all clips"}
+        </Button>
         <div className="ml-auto">
           <ManualClipper project={project} games={games} sources={sources} reload={reload} defaultCategory={lockedCategory} />
         </div>
@@ -184,11 +207,11 @@ export default function ClipsTab({ project, games, sources, clips, tapes, reload
         </div>
       ) : (
         <div className="space-y-4">
-          {visible.map((c) => (
+          {visible.map((c, i) => (
             <div key={c.id} className="flex gap-3">
               <input type="checkbox" checked={!!selected[c.id]} onChange={() => toggle(c.id)} className="mt-3 h-4 w-4 shrink-0 accent-primary" aria-label="Select clip" />
               <div className="min-w-0 flex-1">
-                <ClipCard clip={c} reload={reload} project={project} tapes={tapes}
+                <ClipCard clip={c} reload={reload} project={project} tapes={tapes} index={i}
                   source={sources.find((s) => s.id === c.video_source_id)} game={games.find((g) => g.id === c.game_id)} onMove={(dir) => move(c, dir)} />
               </div>
             </div>

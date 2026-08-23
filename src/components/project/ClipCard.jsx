@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import MobileSelect from "@/components/ui/mobile-select";
-import { Check, X, Trash2, ArrowUp, ArrowDown, Pencil, UserCheck, UserX, Star } from "lucide-react";
+import { Check, X, Trash2, ArrowUp, ArrowDown, Pencil, UserCheck, UserX, Star, Download } from "lucide-react";
 import ClipPlayer from "@/components/ClipPlayer";
 import { CATEGORIES, catMeta, fmtTime, confidenceLabel, identityVerdict } from "@/lib/categories";
+import { downloadClip, clipLabel } from "@/lib/clipDownload";
 import { useToast } from "@/components/ui/use-toast";
 
-export default function ClipCard({ clip, source, game, project, reload, onMove, tapes }) {
+export default function ClipCard({ clip, source, game, project, reload, onMove, tapes, index = 0 }) {
   const [editing, setEditing] = useState(false);
   // Optimistic local overrides — applied instantly so the UI never waits on a
   // round-trip for favourite toggles, status changes, or category switches.
@@ -41,6 +42,15 @@ export default function ClipCard({ clip, source, game, project, reload, onMove, 
     }
   };
   const remove = async () => { await base44.entities.Clip.delete(clip.id); reload(); };
+  const canDownload = !!cur.clip_url && cur.processing_status === "ready";
+  const onDownload = async () => {
+    try {
+      const name = await downloadClip(cur, index);
+      toast({ title: "Download started", description: name });
+    } catch (e) {
+      toast({ title: "Could not download clip", description: e?.message || "Clip not ready yet", variant: "destructive" });
+    }
+  };
   const toggleEdit = () => { if (editing) reload(); setEditing(!editing); };
 
   const statusRing =
@@ -194,6 +204,9 @@ export default function ClipCard({ clip, source, game, project, reload, onMove, 
             options={mixReels.map((t) => ({ value: t.id, label: t.version_label || t.title || "Reel" }))}
           />
         )}
+        <Button size="sm" variant="outline" className="h-11 md:h-9 border-white/15 bg-transparent" disabled={!canDownload} onClick={onDownload}>
+          <Download className="mr-1.5 h-3.5 w-3.5" /> Download
+        </Button>
         <Button size="sm" variant="ghost" className="h-11 md:h-9 text-slate-500 hover:text-rose-400" onClick={remove}>
           <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
         </Button>

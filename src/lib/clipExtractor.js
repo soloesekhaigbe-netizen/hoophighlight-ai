@@ -6,10 +6,12 @@
 
 function pickMime() {
   const candidates = [
+    "video/mp4;codecs=avc1.42E01E",
+    "video/mp4;codecs=avc1",
+    "video/mp4",
     "video/webm;codecs=vp9",
     "video/webm;codecs=vp8",
     "video/webm",
-    "video/mp4",
   ];
   if (typeof MediaRecorder === "undefined") return "video/webm";
   for (const m of candidates) {
@@ -60,7 +62,7 @@ export function canvasToBlob(canvas, type = "image/jpeg", quality = 0.8) {
 
 // Extract a real video segment [start, end] from the source. Returns { blob,
 // duration, type }. Calls onProgress(0..1) as it records in real time.
-export async function extractClipFile({ sourceUrl, start, end, fps = 24, onProgress }) {
+export async function extractClipFile({ sourceUrl, start, end, fps = 30, onProgress }) {
   const v = await makeVideo(sourceUrl);
   const dur = v.duration || 0;
   const lo = Math.max(0, Number(start) || 0);
@@ -78,7 +80,7 @@ export async function extractClipFile({ sourceUrl, start, end, fps = 24, onProgr
   const stream = canvas.captureStream(fps);
   const mime = pickMime();
   let rec;
-  try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 4_000_000 }); }
+  try { rec = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 }); }
   catch (_e) { rec = new MediaRecorder(stream); }
   const chunks = [];
   rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };

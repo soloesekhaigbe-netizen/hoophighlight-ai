@@ -43,7 +43,8 @@ export default function ClipExtractionRunner({ clips, sources, reload }) {
           end: clip.end_seconds,
           onProgress: (p) => setProgress(Math.round(p * 100)),
         });
-        const file = new File([blob], `clip_${clip.id}.webm`, { type: blob.type });
+        const ext = (blob.type || "video/webm").includes("mp4") ? "mp4" : "webm";
+        const file = new File([blob], `clip_${clip.id}.${ext}`, { type: blob.type });
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
 
         let thumbnail_url = clip.thumbnail_url || "";
